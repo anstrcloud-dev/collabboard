@@ -1,31 +1,31 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
+import { useState } from "react"
+import { useRouter } from "next/navigation"
+import Link from "next/link"
 
 export default function RegisterPage() {
     // TODO: create 4 state variables — name, email, password, error, loading
-    const [name, setName] = useState("");
+    const [name, setName] = useState("")
 
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
+    const [email, setEmail] = useState("")
+    const [password, setPassword] = useState("")
 
     // Store any error message to show to the user
-    const [error, setError] = useState("");
+    const [error, setError] = useState("")
 
     // Store loading state so we can disable the button while submitting
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(false)
 
 
     const router = useRouter();
 
     async function handleSubmit(e: React.FormEvent) {
         // TODO: prevent default form behaviour
-        e.preventDefault();
+        e.preventDefault()
 
-        setLoading(true);
-        setError("");
+        setLoading(true)
+        setError("")
 
         // TODO: make a POST request to /api/register
         // with a JSON body containing name, email, password
@@ -38,15 +38,15 @@ export default function RegisterPage() {
 
 
         if (!response.ok) {
-            const data = await response.json();
-            setError(data.error);
-            setLoading(false);
-            return;
+            const data = await response.json()
+            setError(data.error)
+            setLoading(false)
+            return
         }
 
         // TODO: if registration succeeded, redirect to /login
         else {
-            router.push("/login");
+            router.push("/login")
         }
     }
 

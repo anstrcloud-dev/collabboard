@@ -8,6 +8,18 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   pages: {
     signIn: "/login",
   },
+  callbacks: {
+    //add the user's database id to the JWT token
+    async jwt({ token, user }) {
+      if (user) token.id = user.id;
+      return token;
+    },
+    // Make the ID available in the session
+    async session({ session, token }) {
+      if (token) session.user.id = token.id as string;
+      return session;
+    },
+  },
   providers: [
     Credentials({
       credentials: {
