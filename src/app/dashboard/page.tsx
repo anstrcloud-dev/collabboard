@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
+import Link from "next/link";
 
 // This defines the shape of a Project object
 type Project = {
@@ -49,13 +50,14 @@ export default function DashboardPage() {
             return //stop here if something went wrong
         }
 
-
-        await queryClient.invalidateQueries({ queryKey: ["projects"] }) //triggers an automatic refetch and your new project appears on screen
-
         setLoading(false)
         setFormOpen(false)
         setName("")
         setDescription("")
+
+        await queryClient.invalidateQueries({ queryKey: ["projects"] }) //triggers an automatic refetch and your new project appears on screen
+
+
 
     }
 
@@ -131,10 +133,12 @@ export default function DashboardPage() {
 
                 {/* Show the list of projects */}
                 {projects?.map((project: Project) => (
-                    <div key={project.id} className="bg-white p-6 rounded-lg shadow-md mb-4 cursor-pointer hover:shadow-lg">
-                        <h2 className="text-lg font-semibold text-gray-900">{project.name}</h2>
-                        <p className="text-gray-500 mt-1">{project.description}</p>
-                    </div>
+                    <Link key={project.id} href={`/dashboard/${project.id}`}>
+                        <div className="bg-white p-6 rounded-lg shadow-md mb-4 cursor-pointer hover:shadow-lg">
+                            <h2 className="text-lg font-semibold text-gray-900">{project.name}</h2>
+                            <p className="text-gray-500 mt-1">{project.description}</p>
+                        </div>
+                    </Link>
                 ))}
 
             </div>

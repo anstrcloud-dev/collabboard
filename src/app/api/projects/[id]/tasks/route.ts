@@ -10,6 +10,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requireAuth } from "@/lib/session";
+import { TaskStatus } from "@prisma/client"
 
 export async function GET(
   request: Request,
@@ -53,10 +54,10 @@ export async function POST(
   const { id } = await params;
 
   //parse
-  const { title, description } = await request.json();
+  const { title, description, status } = await request.json()
 
   const task = await db.task.create({
-    data: { title, description, projectId: id }
+    data: { title, description, projectId: id, status: status as TaskStatus }
   });
 
 
