@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
-import Link from "next/link";
+import Link from "next/link"
+import { useSession } from "next-auth/react"
+import { useRouter } from "next/navigation"
 
 // This defines the shape of a Project object
 type Project = {
@@ -19,13 +21,32 @@ export default function DashboardPage() {
     const [description, setDescription] = useState("")
     const [loading, setLoading] = useState(false)
 
-    const queryClient = useQueryClient();
+    const queryClient = useQueryClient()
 
-    // This fetches projects from /api/projects automatically
+    const { status } = useSession()
+    const router = useRouter()
+
+
+
+    //fetches projects from /api/projects automatically
     const { data: projects, isLoading: projectsLoading } = useQuery({
         queryKey: ["projects"],
-        queryFn: () => fetch("/api/projects").then((res) => res.json()),
-    });
+        queryFn: async () => {
+            const res = await fetch("/api/projects")
+            if (!res.ok) return []
+            return res.json()
+        },
+    })
+
+    useEffect(() => {
+        if (status === "unauthenticated") {
+            router.push("/login")
+        }
+    }, [status, router])
+
+    if (status === "loading" || status === "unauthenticated") {
+        return <p className="p-8">Loading...</p>
+    }
 
     // TODO: write a handleCreateProject async function that:
     // 1. sets loading to true
@@ -130,9 +151,8 @@ export default function DashboardPage() {
 
                 {/* Show loading text while fetching projects */}
                 {projectsLoading && <p className="text-gray-500">Loading...</p>}
-
-                {/* Show the list of projects */}
-                {projects?.map((project: Project) => (
+                {/* Show the list of projects - error check*/}
+                {Array.isArray(projects) && projects.map((project: Project) => (
                     <Link key={project.id} href={`/dashboard/${project.id}`}>
                         <div className="bg-white p-6 rounded-lg shadow-md mb-4 cursor-pointer hover:shadow-lg">
                             <h2 className="text-lg font-semibold text-gray-900">{project.name}</h2>
@@ -140,6 +160,7 @@ export default function DashboardPage() {
                         </div>
                     </Link>
                 ))}
+
 
             </div>
         </div>
