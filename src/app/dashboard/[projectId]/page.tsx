@@ -1,8 +1,12 @@
-"use client";
+"use client"
 
-import { useParams } from "next/navigation";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useParams } from "next/navigation"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { useState, useEffect } from "react"
+
+import { DndContext, DragEndEvent } from "@dnd-kit/core"
+import { TaskCard } from "@/components/TaskCard"
+import { Column } from "@/components/Column"
 
 // The shape of a Task object
 type Task = {
@@ -28,21 +32,22 @@ export default function BoardPage() {
     const [newTaskTitle, setNewTaskTitle] = useState(""); //// The title of the new task being typed
 
     // Fetch all tasks for this project
-    const { data: tasks, isLoading } = useQuery({
+    const { data: serverTasks, isLoading } = useQuery({
         queryKey: ["tasks", projectId],
         queryFn: () =>
             fetch(`/api/projects/${projectId}/tasks`).then((res) => res.json()),
-    });
+    })
 
-    if (isLoading) return <p className="p-8">Loading...</p>;
+    // Local copy of tasks we can update instantly
+    const [localTasks, setLocalTasks] = useState<Task[]>([])
 
-
+    // Keep localTasks in sync with server data
+    useEffect(() => {
+        if (serverTasks) setLocalTasks(serverTasks)
+    }, [serverTasks])
+    if (isLoading) return <p className="p-8">Loading...</p>
 
     async function handleCreateTask(status: string) {
-
-
-        //   setLoading(true)
-        //  setError("");
 
         const response = await fetch(`/api/projects/${projectId}/tasks`, {
             method: "POST",
@@ -54,70 +59,89 @@ export default function BoardPage() {
         setNewTaskTitle("")
         setActiveColumn(null)
 
+    }
 
+    async function handleDragEnd(event: DragEndEvent) {
+        const { active, over } = event
+        if (!over) return
+
+        const taskId = active.id as string
+        const newStatus = over.id as string
+
+        // Update UI immediately without waiting for server
+        setLocalTasks(prev =>
+            prev.map(task =>
+                task.id === taskId ? { ...task, status: newStatus as Task["status"] } : task
+            )
+        )
+
+        // Then sync with server in background
+        await fetch(`/api/projects/${projectId}/tasks/${taskId}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ status: newStatus }),
+        })
+
+        await queryClient.invalidateQueries({ queryKey: ["tasks", projectId] })
     }
 
 
-    
     return (
         <div className="min-h-screen bg-gray-50 p-8">
             <h1 className="text-2xl font-bold text-gray-900 mb-8">Board</h1>
-            <div className="flex gap-4">
-                {COLUMNS.map((column) => (
-                    <div key={column.id} className="bg-gray-200 rounded-lg p-4 w-64 min-h-96">
-                        <h2 className="font-semibold text-gray-700 mb-4">{column.label}</h2>
+            <DndContext onDragEnd={handleDragEnd}>
+                <div className="flex gap-4">
+                    {COLUMNS.map((column) => (
+                        <Column key={column.id} id={column.id} label={column.label}>
+                            {/* Show tasks that belong to this column */}
+                            {localTasks
+                                .filter((task: Task) => task.status === column.id)
+                                .map((task: Task) => (
+                                    <TaskCard key={task.id} task={task} />
 
-                        {/* Show tasks that belong to this column */}
-                        {tasks
-                            ?.filter((task: Task) => task.status === column.id)
-                            .map((task: Task) => (
-                                <div key={task.id} className="bg-white rounded-md p-3 mb-2 shadow-sm">
-                                    <p className="text-sm font-medium text-gray-900">{task.title}</p>
-                                    {task.description && (
-                                        <p className="text-xs text-gray-500 mt-1">{task.description}</p>
-                                    )}
+                                ))}
+
+                            {/* Add task button/form */}
+                            {activeColumn === column.id ? (
+                                // TODO:  form here
+                                <div>
+                                    <input
+                                        type="text"
+                                        value={newTaskTitle}
+                                        onChange={(e) => setNewTaskTitle(e.target.value)}
+                                        className="w-full border border-gray-300 rounded-md px-3 py-2"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => handleCreateTask(column.id)}
+                                        className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300"
+                                    >
+                                        Add
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setActiveColumn(null)}
+                                        className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300"
+                                    >
+                                        Cancel
+                                    </button>
                                 </div>
-                            ))}
-
-                        {/* Add task button/form */}
-                        {activeColumn === column.id ? (
-                            // TODO:  form here
-                            <div>
-                                <input
-                                    type="text"
-                                    value={newTaskTitle}
-                                    onChange={(e) => setNewTaskTitle(e.target.value)}
-                                    className="w-full border border-gray-300 rounded-md px-3 py-2"
-                                />
+                            ) : (
+                                // TODO:  button here
                                 <button
                                     type="button"
-                                    onClick={() => handleCreateTask(column.id)}
+                                    onClick={() => setActiveColumn(column.id)}
                                     className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300"
                                 >
-                                    Add
+                                    + Add task
                                 </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setActiveColumn(null)}
-                                    className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300"
-                                >
-                                    Cancel
-                                </button>
-                            </div>
-                        ) : (
-                            // TODO:  button here
-                            <button
-                                type="button"
-                                onClick={() => setActiveColumn(column.id)}
-                                className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300"
-                            >
-                                + Add task
-                            </button>
-                        )}
+                            )}
 
-                    </div>
-                ))}
-            </div>
+                        </Column>
+
+                    ))}
+                </div>
+            </DndContext>
         </div>
     )
 }
