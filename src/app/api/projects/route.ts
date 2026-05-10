@@ -16,9 +16,10 @@
 //→ Returns projects as JSON
 //→ React displays them on screen
 
-import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import { requireAuth } from "@/lib/session";
+import { NextResponse } from "next/server"
+import { db } from "@/lib/db"
+import { requireAuth } from "@/lib/session"
+import type { Project, ProjectMember } from "@prisma/client"
 
 // GET /api/projects — returns all projects the logged in user is a member of
 export async function GET() {
@@ -37,10 +38,14 @@ export async function GET() {
     if (error) return error;
 
     // Step 3: get all projects this user is a member of
-    const memberships = await db.projectMember.findMany({
+    /* const memberships = await db.projectMember.findMany({
+         where: { userId: user.id },
+         include: { project: true },
+     });*/
+    const memberships: (ProjectMember & { project: Project })[] = await db.projectMember.findMany({
         where: { userId: user.id },
         include: { project: true },
-    });
+    })
 
     // Step 4: extract just the project objects from the memberships
     const projects = memberships.map((m) => m.project);
