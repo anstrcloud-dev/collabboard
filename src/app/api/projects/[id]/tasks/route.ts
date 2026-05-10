@@ -7,10 +7,10 @@
 //
 // [id] is the project ID from the URL — it's dynamic and changes per project
 
-import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import { requireAuth } from "@/lib/session";
-import { TaskStatus } from "@prisma/client"
+import { NextResponse } from "next/server"
+import { db } from "@/lib/db"
+import { requireAuth } from "@/lib/session"
+//import { TaskStatus } from "@prisma/client"
 
 export async function GET(
   request: Request,
@@ -57,7 +57,8 @@ export async function POST(
   const { title, description, status } = await request.json()
 
   const task = await db.task.create({
-    data: { title, description, projectId: id, status: status as TaskStatus }
+    //data: { title, description, projectId: id, status: status as TaskStatus }
+    data: { title, description, projectId: id, status: status as "BACKLOG" | "IN_PROGRESS" | "IN_REVIEW" | "DONE" }
   });
 
 
