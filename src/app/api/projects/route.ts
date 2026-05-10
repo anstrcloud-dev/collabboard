@@ -23,7 +23,7 @@ import { Prisma } from "@prisma/client"
 
 
 // GET /api/projects — returns all projects the logged in user is a member of
-export async function GET() {
+/*export async function GET() {
     // TODO: call requireAuth() and return the error if there is one
 
     // TODO: query the database for all ProjectMember records
@@ -42,19 +42,30 @@ export async function GET() {
     /* const memberships = await db.projectMember.findMany({
          where: { userId: user.id },
          include: { project: true },
-     });*/
+     });
     const memberships: Prisma.ProjectMemberGetPayload<{ include: { project: true } }>[] = await db.projectMember.findMany({
         where: { userId: user.id },
         include: { project: true },
     })
+*/
+export async function GET() {
+    const { user, error } = await requireAuth()
+    if (error) return error
 
+    const memberships = await db.projectMember.findMany({
+        where: { userId: user.id },
+        include: { project: true },
+    })
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     // Step 4: extract just the project objects from the memberships
-    const projects = memberships.map((m) => m.project);
+
+    const projects = memberships.map((m: any) => m.project)
 
     // Step 5: return them as JSON
-    return NextResponse.json(projects);
+    return NextResponse.json(projects)
 }
+
 
 // POST /api/projects — creates a new project
 export async function POST(request: Request) {
