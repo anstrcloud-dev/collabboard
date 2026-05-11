@@ -20,7 +20,7 @@ export function TaskCard({ task }: { task: Task }) {
     ? { transform: `translate(${transform.x}px, ${transform.y}px)` }
     : undefined
 
-   return (
+  return (
     <div
       ref={setNodeRef}
       style={style}
@@ -28,8 +28,7 @@ export function TaskCard({ task }: { task: Task }) {
       {...attributes}
       className="backdrop-blur-md bg-white/10 border border-white/20 rounded-xl p-3 mb-2 cursor-grab active:cursor-grabbing hover:bg-white/20 transition-all"
     >
-      <p className="text-sm font-medium text-white">{task.title}</p>
-      {task.description && (
+      <p className="text-base font-medium text-white">{task.title}</p>      {task.description && (
         <p className="text-xs text-white/60 mt-1">{task.description}</p>
       )}
     </div>

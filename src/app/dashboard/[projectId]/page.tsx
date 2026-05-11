@@ -40,6 +40,15 @@ export default function BoardPage() {
             fetch(`/api/projects/${projectId}/tasks`).then((res) => res.json()),
     })
 
+    //show actual project name
+    const { data: project } = useQuery({
+        queryKey: ["project", projectId],
+        queryFn: () =>
+            fetch(`/api/projects`).then((res) => res.json()).then((projects) =>
+                projects.find((p: { id: string }) => p.id === projectId)
+            ),
+    })
+
     // Local copy of tasks we can update instantly
     const [localTasks, setLocalTasks] = useState<Task[]>([])
 
@@ -89,66 +98,65 @@ export default function BoardPage() {
 
 
     return (
-    <div className="min-h-screen p-8">
-      {/* Header */}
-      <div className="flex items-center gap-4 mb-8">
-        <Link
-          href="/dashboard"
-          className="backdrop-blur-md bg-white/10 border border-white/20 text-white px-4 py-2 rounded-lg hover:bg-white/20 transition-all"
-        >
-          ← Back
-        </Link>
-        <h1 className="text-2xl font-bold text-white">Board</h1>
-      </div>
-
-      {/* Kanban columns */}
-      <DndContext onDragEnd={handleDragEnd}>
-        <div className="flex gap-4 overflow-x-auto pb-4">
-          {COLUMNS.map((column) => (
-            <Column key={column.id} id={column.id} label={column.label}>
-              {localTasks
-                .filter((task: Task) => task.status === column.id)
-                .map((task: Task) => (
-                  <TaskCard key={task.id} task={task} />
-                ))}
-
-              {activeColumn === column.id ? (
-                <div className="mt-2">
-                  <input
-                    type="text"
-                    value={newTaskTitle}
-                    onChange={(e) => setNewTaskTitle(e.target.value)}
-                    placeholder="Task title..."
-                    className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-white/50 text-sm mb-2 focus:outline-none"
-                    autoFocus
-                  />
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => handleCreateTask(column.id)}
-                      className="bg-white/20 border border-white/30 text-white px-3 py-1 rounded-lg text-sm hover:bg-white/30 transition-all"
-                    >
-                      Add
-                    </button>
-                    <button
-                      onClick={() => setActiveColumn(null)}
-                      className="bg-white/10 border border-white/20 text-white px-3 py-1 rounded-lg text-sm hover:bg-white/20 transition-all"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <button
-                  onClick={() => setActiveColumn(column.id)}
-                  className="mt-2 w-full text-left text-sm text-white/50 hover:text-white/80 p-2 rounded-lg hover:bg-white/10 transition-all"
+        <div className="min-h-screen p-8">
+            {/* Header */}
+            <div className="flex items-center gap-4 mb-8">
+                <Link
+                    href="/dashboard"
+                    className="backdrop-blur-md bg-white/10 border border-white/20 text-white px-4 py-2 rounded-lg hover:bg-white/20 transition-all"
                 >
-                  + Add task
-                </button>
-              )}
-            </Column>
-          ))}
+                    ← Back
+                </Link>
+                <h1 className="text-2xl font-bold text-white">{project?.name ?? "Board"}</h1>
+            </div>
+
+            {/* Kanban columns */}
+            <DndContext onDragEnd={handleDragEnd}>
+                <div className="flex gap-6 justify-center pb-4">                    {COLUMNS.map((column) => (
+                    <Column key={column.id} id={column.id} label={column.label}>
+                        {localTasks
+                            .filter((task: Task) => task.status === column.id)
+                            .map((task: Task) => (
+                                <TaskCard key={task.id} task={task} />
+                            ))}
+
+                        {activeColumn === column.id ? (
+                            <div className="mt-2">
+                                <input
+                                    type="text"
+                                    value={newTaskTitle}
+                                    onChange={(e) => setNewTaskTitle(e.target.value)}
+                                    placeholder="Task title..."
+                                    className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-white/50 text-sm mb-2 focus:outline-none"
+                                    autoFocus
+                                />
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => handleCreateTask(column.id)}
+                                        className="bg-white/20 border border-white/30 text-white px-3 py-1 rounded-lg text-sm hover:bg-white/30 transition-all"
+                                    >
+                                        Add
+                                    </button>
+                                    <button
+                                        onClick={() => setActiveColumn(null)}
+                                        className="bg-white/10 border border-white/20 text-white px-3 py-1 rounded-lg text-sm hover:bg-white/20 transition-all"
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                            </div>
+                        ) : (
+                            <button
+                                onClick={() => setActiveColumn(column.id)}
+                                className="mt-2 w-full text-left text-sm text-white/50 hover:text-white/80 p-2 rounded-lg hover:bg-white/10 transition-all"
+                            >
+                                + Add task
+                            </button>
+                        )}
+                    </Column>
+                ))}
+                </div>
+            </DndContext>
         </div>
-      </DndContext>
-    </div>
-  )
+    )
 }
