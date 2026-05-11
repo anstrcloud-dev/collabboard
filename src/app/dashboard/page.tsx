@@ -5,6 +5,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query"
 import Link from "next/link"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
+import { signOut } from "next-auth/react"
 
 // This defines the shape of a Project object
 type Project = {
@@ -86,15 +87,23 @@ export default function DashboardPage() {
         <div className="min-h-screen bg-gray-50 p-8">
             <div className="max-w-4xl mx-auto">
 
-                {/* Header row with title and New Project button */}
+                {/* Header row with title and Logout, New Project button */}
                 <div className="flex items-center justify-between mb-8">
                     <h1 className="text-2xl font-bold text-gray-900">My Projects</h1>
-                    <button
-                        onClick={() => setFormOpen(true)}
-                        className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
-                    >
-                        New Project
-                    </button>
+                    <div className="flex gap-2">
+                        <button
+                            onClick={() => signOut({ callbackUrl: "/login" })}
+                            className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300"
+                        >
+                            Logout
+                        </button>
+                        <button
+                            onClick={() => setFormOpen(true)}
+                            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+                        >
+                            New Project
+                        </button>
+                    </div>
                 </div>
 
                 {/* New project form — only shows when FormOpen is true */}
