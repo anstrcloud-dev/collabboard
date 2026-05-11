@@ -2,14 +2,14 @@ import Link from "next/link"
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+    <div className="min-h-screen bg-gradient-to-br from-blue-600 to-purple-700 flex items-center justify-center">
       <div className="text-center max-w-2xl px-8">
 
         {/* App name */}
-        <h1 className="text-5xl font-bold text-gray-900 mb-4">CollabBoard</h1>
+        <h1 className="text-5xl font-bold text-white mb-4">CollabBoard</h1>
 
         {/* Description */}
-        <p className="text-xl text-gray-600 mb-8">
+        <p className="text-xl text-blue-100 mb-8">
           A simple project management tool for teams. Organize tasks, track progress, and collaborate in real time.
         </p>
 
