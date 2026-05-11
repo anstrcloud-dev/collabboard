@@ -2,7 +2,9 @@
 
 > 🚧 Work in progress
 
-A full-stack project management app inspired by Linear/Jira. Built with Next.js, TypeScript, Prisma, and PostgreSQL.
+**Live demo:** https://collabboard-qh8k.vercel.app
+
+A full-stack project management app inspired by Linear/Jira. Built with Next.js, TypeScript, Prisma, and PostgreSQL
 
 ## Features
 
