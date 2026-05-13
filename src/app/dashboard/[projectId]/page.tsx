@@ -2,13 +2,16 @@
 
 import { useParams } from "next/navigation"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react" // useRef reference a value that’s not needed for rendering (for socket)
 
 import { DndContext, DragEndEvent } from "@dnd-kit/core"
 import { TaskCard } from "@/components/TaskCard"
 import { Column } from "@/components/Column"
 
 import Link from "next/link"
+
+import { io } from "socket.io-client"
+
 
 // The shape of a Task object
 type Task = {
@@ -33,6 +36,8 @@ export default function BoardPage() {
     const [activeColumn, setActiveColumn] = useState<string | null>(null); //  // Which column's form is currently open (null = none open)
     const [newTaskTitle, setNewTaskTitle] = useState(""); //// The title of the new task being typed
 
+    const socketRef = useRef<ReturnType<typeof io> | null>(null)
+
     // Fetch all tasks for this project
     const { data: serverTasks, isLoading } = useQuery({
         queryKey: ["tasks", projectId],
@@ -53,9 +58,43 @@ export default function BoardPage() {
     const [localTasks, setLocalTasks] = useState<Task[]>([])
 
     // Keep localTasks in sync with server data
+    //runs after changes
     useEffect(() => {
         if (serverTasks) setLocalTasks(serverTasks)
-    }, [serverTasks])
+    }, [serverTasks]) //run whenever serverTasks changes
+
+
+    useEffect(() => {
+        //connect to socket.io server
+        const socket = io(process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:3001")
+        socketRef.current = socket
+
+        //join this project's room
+        socket.emit("join:board", { projectId })
+
+        //listen for task moves from other users
+        socket.on("task:moved", (data: { taskId: string; newStatus: string }) => {
+            setLocalTasks(prev =>
+                prev.map(task =>
+                    task.id === data.taskId
+                        ? { ...task, status: data.newStatus as Task["status"] }
+                        : task
+                )
+            )
+        })
+
+        //listen for new tasks from other users
+        socket.on("task:created", () => {
+            queryClient.invalidateQueries({ queryKey: ["tasks", projectId] })
+        })
+
+
+        //disconnect when leaving the page
+        return () => {
+            socket.disconnect()
+        }
+    }, [projectId])
+
     if (isLoading) return <p className="p-8">Loading...</p>
 
     async function handleCreateTask(status: string) {
@@ -66,6 +105,7 @@ export default function BoardPage() {
             body: JSON.stringify({ title: newTaskTitle, status }),
         })
 
+        socketRef.current?.emit("task:created", { projectId })
         await queryClient.invalidateQueries({ queryKey: ["tasks", projectId] })
         setNewTaskTitle("")
         setActiveColumn(null)
@@ -73,18 +113,27 @@ export default function BoardPage() {
     }
 
     async function handleDragEnd(event: DragEndEvent) {
+        console.log("handleDragEnd fired!", event)
         const { active, over } = event
         if (!over) return
 
         const taskId = active.id as string
         const newStatus = over.id as string
 
-        // Update UI immediately without waiting for server
+        // Update UI immediately without waiting for server - optimistic update
         setLocalTasks(prev =>
             prev.map(task =>
                 task.id === taskId ? { ...task, status: newStatus as Task["status"] } : task
             )
         )
+
+        console.log("Socket connected:", socketRef.current?.connected)
+        console.log("Emitting task:moved", { projectId, taskId, newStatus })
+        socketRef.current?.emit("task:moved", { projectId, taskId, newStatus })
+
+        //notify other users via websocket immidiately
+        socketRef.current?.emit("task:moved", { projectId, taskId, newStatus })
+
 
         // Then sync with server in background
         await fetch(`/api/projects/${projectId}/tasks/${taskId}`, {
@@ -94,6 +143,7 @@ export default function BoardPage() {
         })
 
         await queryClient.invalidateQueries({ queryKey: ["tasks", projectId] })
+
     }
 
 
