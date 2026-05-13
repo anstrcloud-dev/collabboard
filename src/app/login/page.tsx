@@ -50,7 +50,7 @@ export default function LoginPage() {
       <div className="backdrop-blur-md bg-white/10 border border-white/20 rounded-3xl p-8 shadow-2xl w-full max-w-md">
 
         <h1 className="text-2xl font-bold text-white mb-6">
-          Sign in to CollabBoard
+          Sign in
         </h1>
 
         <form onSubmit={handleSubmit} className="space-y-4">
