@@ -9,7 +9,7 @@ export default function Home() {
         <div className="backdrop-blur-md bg-white/10 border border-white/20 rounded-3xl p-12 shadow-2xl">
 
           {/* App name */}
-          <h1 className="text-6xl font-bold text-white mb-4">CollabBoard</h1>
+          <h1 className="text-6xl font-bold text-white mb-4">flowbit</h1>
 
           {/* Description */}
           <p className="text-xl text-white/80 mb-10">

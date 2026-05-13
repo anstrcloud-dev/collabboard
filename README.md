@@ -1,6 +1,6 @@
-# CollabBoard
+# flowbit
 
-**Live demo:** https://collabboard-qh8k.vercel.app
+**Live demo:** https://flowbit-iota.vercel.app/
 
 A full-stack project management app inspired by Linear and Jira. Built with Next.js, TypeScript, Prisma, and PostgreSQL.
 
