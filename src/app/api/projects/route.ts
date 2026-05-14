@@ -58,9 +58,13 @@ export async function GET() {
     })
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    // Step 4: extract just the project objects from the memberships
+    // Step 4: extract just the project objects from the memberships (includes role)
 
-    const projects = memberships.map((m: any) => m.project)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const projects = memberships.map((m: any) => ({
+        ...m.project,
+        role: m.role
+    }))
 
     // Step 5: return them as JSON
     return NextResponse.json(projects)
@@ -69,26 +73,26 @@ export async function GET() {
 
 // POST /api/projects — creates a new project
 export async function POST(request: Request) {
-    // TODO: call requireAuth() and return error if not logged in
+    // call requireAuth() and return error if not logged in
     const { user, error } = await requireAuth();
     if (error) return error;
 
-    // TODO: parse the request body to get { name, description }
+    // parse the request body to get { name, description }
     const { name, description } = await request.json();
 
-    // TODO: create the project in the database
+    // create the project in the database
     const project = await db.project.create({
         data: { name, description }
     });
 
 
-    // TODO: add the creator as an ADMIN member of the project
+    // add the creator as an ADMIN member of the project
     await db.projectMember.create({
         data: { userId: user.id!, projectId: project.id, role: "ADMIN" }
     });
 
 
-    // TODO: return the new project as JSON with status 201
+    // return the new project as JSON with status 201
     return NextResponse.json(project,
         { status: 201 }
     );

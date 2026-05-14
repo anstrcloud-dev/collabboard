@@ -9,14 +9,16 @@ import { signOut } from "next-auth/react"
 
 // This defines the shape of a Project object
 type Project = {
-    id: string;
-    name: string;
-    description: string | null;
-    createdAt: string;
+    id: string
+    name: string
+    description: string | null
+    createdAt: string
+    role: "ADMIN" | "MEMBER"
+
 };
 
 export default function DashboardPage() {
-    // TODO: add the 4 state variables
+    //4 state variables
     const [FormOpen, setFormOpen] = useState(false)
     const [name, setName] = useState("")
     const [description, setDescription] = useState("")
@@ -49,7 +51,8 @@ export default function DashboardPage() {
         return <p className="p-8">Loading...</p>
     }
 
-    // TODO: write a handleCreateProject async function that:
+
+    //handleCreateProject async function:
     // 1. sets loading to true
     // 2. POSTs to /api/projects with { name, description }
     // 3. sets loading to false
@@ -58,8 +61,7 @@ export default function DashboardPage() {
     async function handleCreateProject(e: React.FormEvent) {
         e.preventDefault()
 
-        setLoading(true)
-        //  setError("");
+        setLoading(true) //Disables the "Create Project" button while the POST request is in progress, changes the button text from "Create Project" to "Creating..."
 
         const response = await fetch("/api/projects", {
             method: "POST",
@@ -79,9 +81,23 @@ export default function DashboardPage() {
 
         await queryClient.invalidateQueries({ queryKey: ["projects"] }) //triggers an automatic refetch and your new project appears on screen
 
+    }
 
+
+
+    //Call DELETE /api/projects/${projectId}
+    //Call invalidateQueries to refresh the list
+    async function handleDeleteProject(projectId: string) {
+        const response = await fetch(`/api/projects/${projectId}`, {
+            method: "DELETE",
+        })
+
+        await queryClient.invalidateQueries({ queryKey: ["projects"] }) //triggers an automatic refetch and your new project appears on screen
 
     }
+
+
+
 
     return (
         <div className="min-h-screen p-8">
@@ -154,12 +170,24 @@ export default function DashboardPage() {
 
                 {/* Project list */}
                 {Array.isArray(projects) && projects.map((project: Project) => (
-                    <Link key={project.id} href={`/dashboard/${project.id}`}>
-                        <div className="backdrop-blur-md bg-white/10 border border-white/20 rounded-2xl p-6 mb-4 hover:bg-white/20 transition-all cursor-pointer">
-                            <h2 className="text-lg font-semibold text-white">{project.name}</h2>
-                            <p className="text-white/60 mt-1">{project.description}</p>
-                        </div>
-                    </Link>
+                    <div key={project.id} className="relative">
+                        <Link href={`/dashboard/${project.id}`}>
+                            <div className="backdrop-blur-md bg-white/10 border border-white/20 rounded-2xl p-6 mb-4 hover:bg-white/20 transition-all cursor-pointer">
+                                <h2 className="text-lg font-semibold text-white">{project.name}</h2>
+                                <p className="text-white/60 mt-1">{project.description}</p>
+                            </div>
+                        </Link>
+
+                        {/* Only show delete button if user is ADMIN */}
+                        {project.role === "ADMIN" && (
+                            <button
+                                onClick={() => handleDeleteProject(project.id)}
+                                className="absolute top-4 right-4 backdrop-blur-md bg-red-500/20 border border-red-500/30 text-red-300 px-3 py-1 rounded-lg text-sm hover:bg-red-500/30 transition-all"
+                            >
+                                Delete
+                            </button>
+                        )}
+                    </div>
                 ))}
 
                 {/* Empty state */}
