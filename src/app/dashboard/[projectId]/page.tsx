@@ -12,6 +12,8 @@ import Link from "next/link"
 
 import { io } from "socket.io-client"
 
+import { TaskModal } from "@/components/TaskModal"
+
 
 // The shape of a Task object
 type Task = {
@@ -37,6 +39,11 @@ export default function BoardPage() {
     const [newTaskTitle, setNewTaskTitle] = useState(""); //// The title of the new task being typed
 
     const socketRef = useRef<ReturnType<typeof io> | null>(null)
+
+    //for task modal
+    const [selectedTask, setSelectedTask] = useState<Task | null>(null)
+    const [editTitle, setEditTitle] = useState("")
+    const [editDescription, setEditDescription] = useState("")
 
     // Fetch all tasks for this project
     const { data: serverTasks, isLoading } = useQuery({
@@ -129,8 +136,6 @@ export default function BoardPage() {
 
         console.log("Socket connected:", socketRef.current?.connected)
         console.log("Emitting task:moved", { projectId, taskId, newStatus })
-        socketRef.current?.emit("task:moved", { projectId, taskId, newStatus })
-
         //notify other users via websocket immidiately
         socketRef.current?.emit("task:moved", { projectId, taskId, newStatus })
 
@@ -145,6 +150,38 @@ export default function BoardPage() {
         await queryClient.invalidateQueries({ queryKey: ["tasks", projectId] })
 
     }
+
+
+    async function handleSave() {
+        await fetch(`/api/projects/${projectId}/tasks/${selectedTask!.id}`, { //!non-null assertion operator 
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ title: editTitle, description: editDescription }),
+        })
+
+        await queryClient.invalidateQueries({ queryKey: ["tasks", projectId] })
+
+        setSelectedTask(null)
+    }
+
+
+    async function handleDelete() {
+
+        const response = await fetch(`/api/projects/${projectId}/tasks/${selectedTask!.id}`, {
+            method: "DELETE",
+        })
+
+        if (!response.ok) {
+            // something went wrong, show an error
+            return
+        }
+        await queryClient.invalidateQueries({ queryKey: ["tasks", projectId] })
+
+        setSelectedTask(null)
+    }
+
+
+
 
 
     return (
@@ -167,7 +204,13 @@ export default function BoardPage() {
                         {localTasks
                             .filter((task: Task) => task.status === column.id)
                             .map((task: Task) => (
-                                <TaskCard key={task.id} task={task} />
+                                <TaskCard key={task.id}
+                                    task={task}
+                                    onClick={(task) => {
+                                        setSelectedTask(task)
+                                        setEditTitle(task.title)
+                                        setEditDescription(task.description || "")
+                                    }} />
                             ))}
 
                         {activeColumn === column.id ? (
@@ -207,6 +250,18 @@ export default function BoardPage() {
                 ))}
                 </div>
             </DndContext>
+            {selectedTask && (
+                <TaskModal
+                    task={selectedTask}
+                    editTitle={editTitle}
+                    editDescription={editDescription}
+                    onTitleChange={setEditTitle}
+                    onDescriptionChange={setEditDescription}
+                    onSave={handleSave}
+                    onDelete={handleDelete}
+                    onClose={() => setSelectedTask(null)}
+                />
+            )}
         </div>
     )
 }

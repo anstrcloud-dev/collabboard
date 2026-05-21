@@ -92,6 +92,10 @@ export default function DashboardPage() {
             method: "DELETE",
         })
 
+        if (!response.ok) {
+            // something went wrong, show an error
+            return
+        }
         await queryClient.invalidateQueries({ queryKey: ["projects"] }) //triggers an automatic refetch and your new project appears on screen
 
     }

@@ -21,24 +21,39 @@ import { db } from "@/lib/db";
 
 export async function PATCH(
   request: Request,
+  // params is a Promise — not immediately available
   { params }: { params: Promise<{ id: string, taskId: string }> }
 ) {
 
-  const {user, error} = await requireAuth();
+  const { user, error } = await requireAuth();
   if (error) return error;
-     
+  //  //// await unwraps it — waits until the value is read
+
   const { taskId } = await params;
 
-  const { status, title, assigneeId } = await request.json();
+  const { status, title, assigneeId, description } = await request.json();
 
- const task = await db.task.update({ 
-  where: { id: taskId }, 
-  data: { status, title, assigneeId } 
-});
-  
+  const task = await db.task.update({
+    where: { id: taskId },
+    data: { status, title, assigneeId, description }
+  });
+
   return NextResponse.json(task);
 
+}
 
 
 
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ id: string; taskId: string }> }
+) {
+  const { user, error } = await requireAuth()
+  if (error) return error
+
+  const { taskId } = await params
+
+  await db.task.delete({ where: { id: taskId } })
+
+  return NextResponse.json({ message: "Task deleted" }, { status: 200 })
 }
