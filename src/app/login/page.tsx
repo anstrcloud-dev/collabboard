@@ -3,10 +3,11 @@
 // "use client" tells Next.js this component runs in the browser
 // This is needed because we use React hooks (useState) and handle form events
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 
 export default function LoginPage() {
   // Store the form field values in state
@@ -20,6 +21,14 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
 
   const router = useRouter();
+  const { status } = useSession()
+
+  //check if user already logged in
+  useEffect(() => {
+    if (status === 'authenticated') {
+      router.push('/dashboard')
+    }
+  }, [status, router])
 
   // This runs when the user submits the login form
   async function handleSubmit(e: React.FormEvent) {
@@ -32,7 +41,7 @@ export default function LoginPage() {
     const result = await signIn("credentials", {
       email,
       password,
-      redirect: false, // Don't auto-redirect, we'll handle it ourselves
+      redirect: false, // don't auto-redirect, we'll handle it ourselves
     });
 
     if (result?.error) {

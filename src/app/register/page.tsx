@@ -3,6 +3,8 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
+import { useSession } from "next-auth/react"
+import { useEffect } from "react"
 
 export default function RegisterPage() {
     // TODO: create 4 state variables — name, email, password, error, loading
@@ -18,7 +20,15 @@ export default function RegisterPage() {
     const [loading, setLoading] = useState(false)
 
 
-    const router = useRouter();
+   const router = useRouter()
+     const { status } = useSession()
+   
+     //check if user already logged in
+     useEffect(() => {
+       if (status === 'authenticated') {
+         router.push('/dashboard')
+       }
+     }, [status, router])
 
     async function handleSubmit(e: React.FormEvent) {
         // TODO: prevent default form behaviour
