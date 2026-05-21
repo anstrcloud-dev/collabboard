@@ -25,9 +25,19 @@ export default function LoginPage() {
 
   //check if user already logged in
   useEffect(() => {
+    //listen for login from other tabs
+    const channel = new BroadcastChannel("auth")
+    channel.onmessage = (event) => {
+      if (event.data === "logged-in") {
+        router.push("/dashboard")
+      }
+    }
+    //redirect if already authenticated
     if (status === 'authenticated') {
       router.push('/dashboard')
     }
+    // Cleanup channel when leaving the page
+    return () => channel.close()
   }, [status, router])
 
   // This runs when the user submits the login form
@@ -49,6 +59,10 @@ export default function LoginPage() {
       setError("Invalid email or password");
       setLoading(false);
     } else {
+      // Broadcast to other tabs that login happened
+      const channel = new BroadcastChannel("auth")
+      channel.postMessage("logged-in")
+      channel.close()
       // If login succeeded, redirect to the dashboard
       router.push("/dashboard");
     }
