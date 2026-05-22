@@ -13,6 +13,7 @@ import Link from "next/link"
 import { io } from "socket.io-client"
 
 import { TaskModal } from "@/components/TaskModal"
+import { MembersModal } from "@/components/MembersModal"
 
 
 // The shape of a Task object
@@ -31,6 +32,10 @@ const COLUMNS = [
     { id: "DONE", label: "Done" },
 ];
 
+
+
+
+
 export default function BoardPage() {
     // Get the projectId from the URL
     const { projectId } = useParams<{ projectId: string }>();
@@ -45,7 +50,20 @@ export default function BoardPage() {
     const [editTitle, setEditTitle] = useState("")
     const [editDescription, setEditDescription] = useState("")
 
-    // Fetch all tasks for this project
+    //for opening/closing panel
+    const [membersOpen, setMembersOpen] = useState(false)
+    //for invite form
+
+    const [inviteEmail, setInviteEmail] = useState("")
+    const [inviteRole, setInviteRole] = useState("MEMBER")
+    const [inviteError, setInviteError] = useState("")
+
+
+    // Local copy of tasks we can update instantly
+    const [localTasks, setLocalTasks] = useState<Task[]>([])
+
+    // Fetch all tasks for 
+    // this project
     const { data: serverTasks, isLoading } = useQuery({
         queryKey: ["tasks", projectId],
         queryFn: () =>
@@ -61,8 +79,16 @@ export default function BoardPage() {
             ),
     })
 
-    // Local copy of tasks we can update instantly
-    const [localTasks, setLocalTasks] = useState<Task[]>([])
+
+    // fetch members
+    const { data: members = [] } = useQuery({
+        queryKey: ["members", projectId],
+        queryFn: () =>
+            fetch(`/api/projects/${projectId}/members`).then((res) => res.json()),
+    })
+
+
+
 
     // Keep localTasks in sync with server data
     //runs after changes
@@ -104,6 +130,9 @@ export default function BoardPage() {
 
     if (isLoading) return <p className="p-8">Loading...</p>
 
+
+
+    //create task
     async function handleCreateTask(status: string) {
 
         const response = await fetch(`/api/projects/${projectId}/tasks`, {
@@ -165,6 +194,7 @@ export default function BoardPage() {
     }
 
 
+    //delete task
     async function handleDelete() {
 
         const response = await fetch(`/api/projects/${projectId}/tasks/${selectedTask!.id}`, {
@@ -181,21 +211,60 @@ export default function BoardPage() {
     }
 
 
+    /*
+    POST to /api/projects/${projectId}/members with { email: inviteEmail, role: inviteRole }
+If response not ok, set the error message from the response
+If ok, invalidate members query, reset the email input and error
+
+Add Members button to the header next to Back button
+ Render MembersModal when membersOpen is true
+    */
+
+    async function handleInvite() {
+        const response = await fetch(`/api/projects/${projectId}/members`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: inviteEmail, role: inviteRole }),
+        })
+
+        if (!response.ok) {
+            // something went wrong, show an error
+            const data = await response.json()
+            setInviteError(data.error || "No user found")
+            return
+        }
+
+        await queryClient.invalidateQueries({ queryKey: ["members", projectId] })
+        setInviteEmail("")
+        setInviteError("")
+
+    }
+
+
 
 
 
     return (
         <div className="min-h-screen p-8">
             {/* Header */}
-            <div className="flex items-center gap-4 mb-8">
+            <div className="flex items-center justify-between mb-8">
                 <Link
                     href="/dashboard"
                     className="backdrop-blur-md bg-white/10 border border-white/20 text-white px-4 py-2 rounded-lg hover:bg-white/20 transition-all"
                 >
                     ← Back
                 </Link>
+
                 <h1 className="text-2xl font-bold text-white">{project?.name ?? "Board"}</h1>
+
+                <button
+                    onClick={() => setMembersOpen(true)}
+                    className="backdrop-blur-md bg-white/10 border border-white/20 text-white px-4 py-2 rounded-lg hover:bg-white/20 transition-all"
+                >
+                    Members
+                </button>
             </div>
+
 
             {/* Kanban columns */}
             <DndContext onDragEnd={handleDragEnd}>
@@ -260,6 +329,19 @@ export default function BoardPage() {
                     onSave={handleSave}
                     onDelete={handleDelete}
                     onClose={() => setSelectedTask(null)}
+                />
+            )}
+            {membersOpen && (
+                <MembersModal
+                    members={members}
+                    inviteEmail={inviteEmail}
+                    inviteRole={inviteRole}
+                    inviteError={inviteError}
+                    onEmailChange={setInviteEmail}
+                    onRoleChange={setInviteRole}
+                    onInvite={handleInvite}
+                    onClose={() => setMembersOpen(false)}
+                    isAdmin={project?.role === "ADMIN"}
                 />
             )}
         </div>
