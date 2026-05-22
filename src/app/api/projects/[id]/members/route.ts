@@ -88,3 +88,38 @@ export async function GET(
 
   return NextResponse.json(members)
 }
+
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { user, error } = await requireAuth()
+  if (error) return error
+
+  const { id } = await params
+
+  // check if requesting user is ADMIN
+  const admin = await db.projectMember.findFirst({
+    where: { projectId: id, userId: user.id, role: "ADMIN" }
+  })
+
+  if (!admin) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+  }
+
+  // get the memberId to delete from request body
+  const { memberId } = await request.json()
+
+  // prevent removing yourself
+  const memberToRemove = await db.projectMember.findFirst({
+    where: { id: memberId }
+  })
+
+  if (memberToRemove?.userId === user.id) {
+    return NextResponse.json({ error: "Cannot remove yourself" }, { status: 400 })
+  }
+
+  await db.projectMember.delete({ where: { id: memberId } })
+
+  return NextResponse.json({ message: "Member removed" }, { status: 200 })
+}

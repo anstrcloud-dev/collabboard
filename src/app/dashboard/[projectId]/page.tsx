@@ -148,6 +148,7 @@ export default function BoardPage() {
 
     }
 
+    //move tasks
     async function handleDragEnd(event: DragEndEvent) {
         console.log("handleDragEnd fired!", event)
         const { active, over } = event
@@ -180,7 +181,7 @@ export default function BoardPage() {
 
     }
 
-
+    //save task
     async function handleSave() {
         await fetch(`/api/projects/${projectId}/tasks/${selectedTask!.id}`, { //!non-null assertion operator 
             method: "PATCH",
@@ -241,7 +242,19 @@ Add Members button to the header next to Back button
     }
 
 
-
+    //remove member from the project
+    async function handleRemoveMember(memberId: string) {
+        const response = await fetch(`/api/projects/${projectId}/members`, {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ memberId }),
+        })
+        if (!response.ok) {
+            // something went wrong, show an error
+            return
+        }
+        await queryClient.invalidateQueries({ queryKey: ["members", projectId] })
+    }
 
 
     return (
@@ -342,6 +355,7 @@ Add Members button to the header next to Back button
                     onInvite={handleInvite}
                     onClose={() => setMembersOpen(false)}
                     isAdmin={project?.role === "ADMIN"}
+                    onRemoveMember={handleRemoveMember}
                 />
             )}
         </div>
