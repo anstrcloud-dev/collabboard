@@ -213,11 +213,11 @@ export default function BoardPage() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ title: editTitle, description: editDescription }),
             })
-
+        }
             await queryClient.invalidateQueries({ queryKey: ["tasks", projectId] })
 
             setSelectedTask(null)
-        }
+        
     }
 
         //delete task
