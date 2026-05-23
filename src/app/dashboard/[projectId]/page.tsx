@@ -62,6 +62,18 @@ export default function BoardPage() {
     // Local copy of tasks we can update instantly
     const [localTasks, setLocalTasks] = useState<Task[]>([])
 
+    //for ai suggestions
+    const [suggestions, setSuggestions] = useState<Array<{
+        title: string
+        description: string
+        category: string
+        priority: string
+        reason: string
+    }>>([])
+    const [suggestLoading, setSuggestLoading] = useState(false)
+
+
+
     // Fetch all tasks for 
     // this project
     const { data: serverTasks, isLoading } = useQuery({
@@ -183,181 +195,261 @@ export default function BoardPage() {
 
     //save task
     async function handleSave() {
-        await fetch(`/api/projects/${projectId}/tasks/${selectedTask!.id}`, { //!non-null assertion operator 
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ title: editTitle, description: editDescription }),
-        })
+        if (selectedTask!.id === "new-suggested") {
+            // Create new task instead of updating
+            await fetch(`/api/projects/${projectId}/tasks`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    title: editTitle,
+                    description: editDescription,
+                    status: "BACKLOG"
+                }),
+            })
+        } else {
+              // Update existing task
+            await fetch(`/api/projects/${projectId}/tasks/${selectedTask!.id}`, { //!non-null assertion operator 
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ title: editTitle, description: editDescription }),
+            })
 
-        await queryClient.invalidateQueries({ queryKey: ["tasks", projectId] })
+            await queryClient.invalidateQueries({ queryKey: ["tasks", projectId] })
 
-        setSelectedTask(null)
-    }
-
-
-    //delete task
-    async function handleDelete() {
-
-        const response = await fetch(`/api/projects/${projectId}/tasks/${selectedTask!.id}`, {
-            method: "DELETE",
-        })
-
-        if (!response.ok) {
-            // something went wrong, show an error
-            return
+            setSelectedTask(null)
         }
-        await queryClient.invalidateQueries({ queryKey: ["tasks", projectId] })
-
-        setSelectedTask(null)
     }
 
+        //delete task
+        async function handleDelete() {
 
-    /*
-    POST to /api/projects/${projectId}/members with { email: inviteEmail, role: inviteRole }
-If response not ok, set the error message from the response
-If ok, invalidate members query, reset the email input and error
+            const response = await fetch(`/api/projects/${projectId}/tasks/${selectedTask!.id}`, {
+                method: "DELETE",
+            })
 
-Add Members button to the header next to Back button
- Render MembersModal when membersOpen is true
-    */
+            if (!response.ok) {
+                // something went wrong, show an error
+                return
+            }
+            await queryClient.invalidateQueries({ queryKey: ["tasks", projectId] })
 
-    async function handleInvite() {
-        const response = await fetch(`/api/projects/${projectId}/members`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email: inviteEmail, role: inviteRole }),
-        })
+            setSelectedTask(null)
+        }
 
-        if (!response.ok) {
-            // something went wrong, show an error
+
+        /*
+        POST to /api/projects/${projectId}/members with { email: inviteEmail, role: inviteRole }
+    If response not ok, set the error message from the response
+    If ok, invalidate members query, reset the email input and error
+    
+    Add Members button to the header next to Back button
+     Render MembersModal when membersOpen is true
+        */
+
+        async function handleInvite() {
+            const response = await fetch(`/api/projects/${projectId}/members`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email: inviteEmail, role: inviteRole }),
+            })
+
+            if (!response.ok) {
+                // something went wrong, show an error
+                const data = await response.json()
+                setInviteError(data.error || "No user found")
+                return
+            }
+
+            await queryClient.invalidateQueries({ queryKey: ["members", projectId] })
+            setInviteEmail("")
+            setInviteError("")
+
+        }
+
+
+        //remove member from the project
+        async function handleRemoveMember(memberId: string) {
+            const response = await fetch(`/api/projects/${projectId}/members`, {
+                method: "DELETE",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ memberId }),
+            })
+            if (!response.ok) {
+                // something went wrong, show an error
+                return
+            }
+            await queryClient.invalidateQueries({ queryKey: ["members", projectId] })
+        }
+
+        async function handleSuggest() {  //doesnt need projectId-already avail from useParams
+            setSuggestLoading(true)
+            const response = await fetch(`/api/projects/${projectId}/suggest`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    projectName: project?.name,
+                    projectDescription: project?.description,
+                    existingTasks: localTasks.map(t => t.title)
+                })
+            })
             const data = await response.json()
-            setInviteError(data.error || "No user found")
-            return
+            setSuggestions(data.suggestions)
+            setSuggestLoading(false)
         }
 
-        await queryClient.invalidateQueries({ queryKey: ["members", projectId] })
-        setInviteEmail("")
-        setInviteError("")
 
-    }
+        return (
+            <div className="min-h-screen p-8">
+                {/* Header */}
+                <div className="flex items-center justify-between mb-8">
+                    <Link
+                        href="/dashboard"
+                        className="backdrop-blur-md bg-white/10 border border-white/20 text-white px-4 py-2 rounded-lg hover:bg-white/20 transition-all"
+                    >
+                        ← Back
+                    </Link>
 
+                    <h1 className="text-2xl font-bold text-white">{project?.name ?? "Board"}</h1>
 
-    //remove member from the project
-    async function handleRemoveMember(memberId: string) {
-        const response = await fetch(`/api/projects/${projectId}/members`, {
-            method: "DELETE",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ memberId }),
-        })
-        if (!response.ok) {
-            // something went wrong, show an error
-            return
-        }
-        await queryClient.invalidateQueries({ queryKey: ["members", projectId] })
-    }
-
-
-    return (
-        <div className="min-h-screen p-8">
-            {/* Header */}
-            <div className="flex items-center justify-between mb-8">
-                <Link
-                    href="/dashboard"
-                    className="backdrop-blur-md bg-white/10 border border-white/20 text-white px-4 py-2 rounded-lg hover:bg-white/20 transition-all"
-                >
-                    ← Back
-                </Link>
-
-                <h1 className="text-2xl font-bold text-white">{project?.name ?? "Board"}</h1>
-
-                <button
-                    onClick={() => setMembersOpen(true)}
-                    className="backdrop-blur-md bg-white/10 border border-white/20 text-white px-4 py-2 rounded-lg hover:bg-white/20 transition-all"
-                >
-                    Members
-                </button>
-            </div>
+                    <button
+                        onClick={() => setMembersOpen(true)}
+                        className="backdrop-blur-md bg-white/10 border border-white/20 text-white px-4 py-2 rounded-lg hover:bg-white/20 transition-all"
+                    >
+                        Members
+                    </button>
+                </div>
 
 
-            {/* Kanban columns */}
-            <DndContext onDragEnd={handleDragEnd}>
-                <div className="flex gap-6 justify-center pb-4">                    {COLUMNS.map((column) => (
-                    <Column key={column.id} id={column.id} label={column.label}>
-                        {localTasks
-                            .filter((task: Task) => task.status === column.id)
-                            .map((task: Task) => (
-                                <TaskCard key={task.id}
-                                    task={task}
-                                    onClick={(task) => {
-                                        setSelectedTask(task)
-                                        setEditTitle(task.title)
-                                        setEditDescription(task.description || "")
-                                    }} />
-                            ))}
+                {/* Kanban columns */}
+                <DndContext onDragEnd={handleDragEnd}>
+                    <div className="flex gap-6 justify-center pb-4">                    {COLUMNS.map((column) => (
+                        <Column key={column.id} id={column.id} label={column.label}>
+                            {localTasks
+                                .filter((task: Task) => task.status === column.id)
+                                .map((task: Task) => (
+                                    <TaskCard key={task.id}
+                                        task={task}
+                                        onClick={(task) => {
+                                            setSelectedTask(task)
+                                            setEditTitle(task.title)
+                                            setEditDescription(task.description || "")
+                                        }} />
+                                ))}
 
-                        {activeColumn === column.id ? (
-                            <div className="mt-2">
-                                <input
-                                    type="text"
-                                    value={newTaskTitle}
-                                    onChange={(e) => setNewTaskTitle(e.target.value)}
-                                    placeholder="Task title..."
-                                    className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-white/50 text-sm mb-2 focus:outline-none"
-                                    autoFocus
-                                />
-                                <div className="flex gap-2">
+                            {activeColumn === column.id ? (
+                                <div className="mt-2">
+                                    <input
+                                        type="text"
+                                        value={newTaskTitle}
+                                        onChange={(e) => setNewTaskTitle(e.target.value)}
+                                        placeholder="Task title..."
+                                        className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-white/50 text-sm mb-2 focus:outline-none"
+                                        autoFocus
+                                    />
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => handleCreateTask(column.id)}
+                                            className="bg-white/20 border border-white/30 text-white px-3 py-1 rounded-lg text-sm hover:bg-white/30 transition-all"
+                                        >
+                                            Add
+                                        </button>
+                                        <button
+                                            onClick={() => setActiveColumn(null)}
+                                            className="bg-white/10 border border-white/20 text-white px-3 py-1 rounded-lg text-sm hover:bg-white/20 transition-all"
+                                        >
+                                            Cancel
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <button
+                                    onClick={() => setActiveColumn(column.id)}
+                                    className="mt-2 w-full text-left text-sm text-white/50 hover:text-white/80 p-2 rounded-lg hover:bg-white/10 transition-all"
+                                >
+                                    + Add task
+                                </button>
+                            )}
+                        </Column>
+                    ))}
+                    </div>
+                </DndContext>
+                {/* AI Suggest button */}
+                <div className="flex justify-center mt-6">
+                    <button
+                        onClick={handleSuggest}
+                        disabled={suggestLoading}
+                        className="backdrop-blur-md bg-white/10 border border-white/20 text-white px-6 py-3 rounded-full hover:bg-white/20 transition-all disabled:opacity-50"
+                    >
+                        {suggestLoading ? "Thinking..." : "✨ Suggest tasks"}
+                    </button>
+                </div>
+                {suggestions.length > 0 && (
+                    <div className="mt-8 backdrop-blur-md bg-white/10 border border-white/20 rounded-3xl p-6">
+                        <h2 className="text-white font-bold text-lg mb-4">✨ AI Suggestions</h2>
+                        <div className="space-y-3">
+                            {suggestions.map((s, index) => (
+                                <div key={index} className="flex items-start justify-between bg-white/10 border border-white/20 rounded-xl p-4 gap-4">
+                                    <div>
+                                        <div className="flex gap-2 mb-1">
+                                            <span className="text-xs bg-white/10 text-white/60 px-2 py-0.5 rounded-full">{s.category}</span>
+                                            <span className="text-xs bg-white/10 text-white/60 px-2 py-0.5 rounded-full">{s.priority}</span>
+                                        </div>
+                                        <p className="text-white font-medium text-sm">{s.title}</p>
+                                        <p className="text-white/50 text-xs mt-1">{s.reason}</p>
+                                    </div>
                                     <button
-                                        onClick={() => handleCreateTask(column.id)}
-                                        className="bg-white/20 border border-white/30 text-white px-3 py-1 rounded-lg text-sm hover:bg-white/30 transition-all"
+                                        onClick={() => {
+                                            setSelectedTask({
+                                                id: "new-suggested",
+                                                title: s.title,
+                                                description: s.description,
+                                                status: "BACKLOG"
+                                            })
+                                            setEditTitle(s.title)
+                                            setEditDescription(s.description || "")
+                                            setSuggestions([])
+                                        }}
+                                        className="shrink-0 backdrop-blur-md bg-white/20 border border-white/30 text-white px-3 py-1 rounded-lg text-sm hover:bg-white/30 transition-all"
                                     >
                                         Add
                                     </button>
-                                    <button
-                                        onClick={() => setActiveColumn(null)}
-                                        className="bg-white/10 border border-white/20 text-white px-3 py-1 rounded-lg text-sm hover:bg-white/20 transition-all"
-                                    >
-                                        Cancel
-                                    </button>
                                 </div>
-                            </div>
-                        ) : (
-                            <button
-                                onClick={() => setActiveColumn(column.id)}
-                                className="mt-2 w-full text-left text-sm text-white/50 hover:text-white/80 p-2 rounded-lg hover:bg-white/10 transition-all"
-                            >
-                                + Add task
-                            </button>
-                        )}
-                    </Column>
-                ))}
-                </div>
-            </DndContext>
-            {selectedTask && (
-                <TaskModal
-                    task={selectedTask}
-                    editTitle={editTitle}
-                    editDescription={editDescription}
-                    onTitleChange={setEditTitle}
-                    onDescriptionChange={setEditDescription}
-                    onSave={handleSave}
-                    onDelete={handleDelete}
-                    onClose={() => setSelectedTask(null)}
-                />
-            )}
-            {membersOpen && (
-                <MembersModal
-                    members={members}
-                    inviteEmail={inviteEmail}
-                    inviteRole={inviteRole}
-                    inviteError={inviteError}
-                    onEmailChange={setInviteEmail}
-                    onRoleChange={setInviteRole}
-                    onInvite={handleInvite}
-                    onClose={() => setMembersOpen(false)}
-                    isAdmin={project?.role === "ADMIN"}
-                    onRemoveMember={handleRemoveMember}
-                />
-            )}
-        </div>
-    )
-}
+                            ))}
+                        </div>
+                        <button
+                            onClick={() => setSuggestions([])}
+                            className="mt-4 text-white/40 text-sm hover:text-white/60 transition-all"
+                        >
+                            Dismiss
+                        </button>
+                    </div>
+                )}
+                {selectedTask && (
+                    <TaskModal
+                        task={selectedTask}
+                        editTitle={editTitle}
+                        editDescription={editDescription}
+                        onTitleChange={setEditTitle}
+                        onDescriptionChange={setEditDescription}
+                        onSave={handleSave}
+                        onDelete={handleDelete}
+                        onClose={() => setSelectedTask(null)}
+                    />
+                )}
+                {membersOpen && (
+                    <MembersModal
+                        members={members}
+                        inviteEmail={inviteEmail}
+                        inviteRole={inviteRole}
+                        inviteError={inviteError}
+                        onEmailChange={setInviteEmail}
+                        onRoleChange={setInviteRole}
+                        onInvite={handleInvite}
+                        onClose={() => setMembersOpen(false)}
+                        isAdmin={project?.role === "ADMIN"}
+                        onRemoveMember={handleRemoveMember}
+                    />
+                )}
+            </div>
+        )
+    }
