@@ -24,6 +24,7 @@ type Props = {
   onClose: () => void
   isAdmin: boolean
   onRemoveMember: (memberId: string) => void
+  currentUserId: string
 }
 
 export function MembersModal({
@@ -37,6 +38,7 @@ export function MembersModal({
   onClose,
   isAdmin,
   onRemoveMember,
+  currentUserId
 }: Props) {
 
   return (
@@ -51,6 +53,7 @@ export function MembersModal({
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-bold text-white">Project Members</h2>
+        
         <button onClick={onClose} className="text-white/60 hover:text-white text-xl transition-all">
           ✕
         </button>
@@ -68,7 +71,7 @@ export function MembersModal({
               <span className="text-xs text-white/60 bg-white/10 px-2 py-1 rounded-full">
                 {member.role}
               </span>
-              {isAdmin && (
+              {isAdmin && member.user.id !== currentUserId && (
                 <button
                   onClick={() => onRemoveMember(member.id)}
                   className="text-red-300 hover:text-red-400 text-xs transition-all"

@@ -62,6 +62,7 @@ export function TaskModal({
           value={editTitle}
           onChange={(e) => onTitleChange(e.target.value)}
           className="w-full bg-transparent text-white text-xl font-bold mb-4 border-b border-white/20 pb-2 focus:outline-none focus:border-white/60"
+          style={{ color: 'white' }}
           placeholder="Task title"
         />
 
@@ -70,17 +71,22 @@ export function TaskModal({
           value={editDescription}
           onChange={(e) => onDescriptionChange(e.target.value)}
           className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-white/50 focus:outline-none resize-none h-32 mb-6"
+          style={{ color: 'white' }}
           placeholder="Add a description..."
         />
 
         {/* Buttons */}
         <div className="flex justify-between">
-          <button
-            onClick={onDelete}
-            className="backdrop-blur-md bg-red-500/20 border border-red-500/30 text-red-300 px-4 py-2 rounded-lg hover:bg-red-500/30 transition-all"
-          >
-            Delete task
-          </button>
+          {task.id !== "new-suggested" ? (
+            <button
+              onClick={onDelete}
+              className="backdrop-blur-md bg-red-500/20 border border-red-500/30 text-red-300 px-4 py-2 rounded-lg hover:bg-red-500/30 transition-all"
+            >
+              Delete task
+            </button>
+          ) : (
+            <div />
+          )}
           <div className="flex gap-2">
             <button
               onClick={onClose}
