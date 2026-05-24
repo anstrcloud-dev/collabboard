@@ -2,8 +2,9 @@
 
 body {
   font-family: Arial, Helvetica, sans-serif;
+  color: white;
 }
 
 input, textarea {
-  color: inherit !important;
+  color: inherit;
 }

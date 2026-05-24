@@ -117,7 +117,7 @@ export default function DashboardPage() {
                     <h1 className="text-2xl font-bold text-white">My Projects</h1>
                     <div className="flex gap-2">
                         <button
-                            onClick={() => signOut({ callbackUrl: "/login" })}
+                            onClick={() => signOut({ callbackUrl: "/" })}
                             className="backdrop-blur-md bg-white/10 border border-white/20 text-white px-4 py-2 rounded-lg hover:bg-white/20 transition-all"
                         >
                             Logout
