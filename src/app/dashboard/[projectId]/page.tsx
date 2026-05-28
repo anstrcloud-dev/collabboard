@@ -19,10 +19,15 @@ import { useSession } from "next-auth/react"
 
 // The shape of a Task object
 type Task = {
-    id: string;
-    title: string;
-    description: string | null;
-    status: "BACKLOG" | "IN_PROGRESS" | "IN_REVIEW" | "DONE";
+    id: string
+    title: string
+    description: string | null
+    status: "BACKLOG" | "IN_PROGRESS" | "IN_REVIEW" | "DONE"
+    assigneeId: string | null
+    assignee: {
+        id: string
+        name: string
+    } | null
 };
 
 // The 4 Kanban columns in order
@@ -62,6 +67,10 @@ export default function BoardPage() {
 
     // Local copy of tasks we can update instantly
     const [localTasks, setLocalTasks] = useState<Task[]>([])
+
+    //assing task to a memeber
+    const [editAssigneeId, setEditAssigneeId] = useState<string | null>(null)
+
 
     //for ai suggestions
     const [suggestions, setSuggestions] = useState<Array<{
@@ -118,9 +127,11 @@ export default function BoardPage() {
         socketRef.current = socket
 
         //join this project's room
+        //emit->send
         socket.emit("join:board", { projectId })
 
         //listen for task moves from other users
+        //on->listen
         socket.on("task:moved", (data: { taskId: string; newStatus: string }) => {
             setLocalTasks(prev =>
                 prev.map(task =>
@@ -206,7 +217,8 @@ export default function BoardPage() {
                 body: JSON.stringify({
                     title: editTitle,
                     description: editDescription,
-                    status: "BACKLOG"
+                    status: "BACKLOG",
+                    assigneeId: editAssigneeId
                 }),
             })
 
@@ -218,7 +230,11 @@ export default function BoardPage() {
             await fetch(`/api/projects/${projectId}/tasks/${selectedTask!.id}`, { //!non-null assertion operator 
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ title: editTitle, description: editDescription }),
+                body: JSON.stringify({
+                    title: editTitle,
+                    description: editDescription,
+                    assigneeId: editAssigneeId
+                }),
             })
         }
 
@@ -340,6 +356,7 @@ Add Members button to the header next to Back button
                                         setSelectedTask(task)
                                         setEditTitle(task.title)
                                         setEditDescription(task.description || "")
+                                        setEditAssigneeId(task.assigneeId || null)
                                     }} />
                             ))}
 
@@ -439,8 +456,11 @@ Add Members button to the header next to Back button
                     task={selectedTask}
                     editTitle={editTitle}
                     editDescription={editDescription}
+                    assigneeId={editAssigneeId}
+                    members={members}
                     onTitleChange={setEditTitle}
                     onDescriptionChange={setEditDescription}
+                    onAssigneeChange={setEditAssigneeId}
                     onSave={handleSave}
                     onDelete={handleDelete}
                     onClose={() => setSelectedTask(null)}

@@ -3,8 +3,6 @@
 
 // shows task details when a task card is clicked
 // Allows editing title, description, and deleting the task
-
-
 type Task = {
   id: string
   title: string
@@ -12,16 +10,31 @@ type Task = {
   status: "BACKLOG" | "IN_PROGRESS" | "IN_REVIEW" | "DONE"
 }
 
+//assigning members to a task
+type Member = {
+  id: string
+  role: string
+  user: {
+    id: string
+    name: string
+  }
+}
+
 //the modal needs information from the board page — but it's a separate component, so the board page passes that information as props
 type Props = {
   task: Task
   editTitle: string
   editDescription: string
+
   onTitleChange: (value: string) => void
   onDescriptionChange: (value: string) => void
   onSave: () => void
   onDelete: () => void
   onClose: () => void
+  //for member assignment
+  members: { id: string; user: { id: string; name: string } }[]
+  assigneeId: string | null
+  onAssigneeChange: (userId: string | null) => void
 }
 
 export function TaskModal({
@@ -33,6 +46,9 @@ export function TaskModal({
   onSave,
   onDelete,
   onClose,
+  members,
+  assigneeId,
+  onAssigneeChange,
 }: Props) {
   return (
     // Backdrop — clicking outside the modal closes it
@@ -74,7 +90,23 @@ export function TaskModal({
           style={{ color: 'white' }}
           placeholder="Add a description..."
         />
-
+        {/* Assignee */}
+        <div className="mb-6">
+          <p className="text-white/70 text-sm mb-2">Assigned to</p>
+          <select
+            value={assigneeId || ""}
+            onChange={(e) => onAssigneeChange(e.target.value || null)}
+            className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white focus:outline-none"
+            style={{ color: 'white' }}
+          >
+            <option value="" className="bg-purple-900">Nobody</option>
+            {members.map((member) => (
+              <option key={member.id} value={member.user.id} className="bg-purple-900">
+                {member.user.name}
+              </option>
+            ))}
+          </select>
+        </div>
         {/* Buttons */}
         <div className="flex justify-between">
           {task.id !== "new-suggested" ? (

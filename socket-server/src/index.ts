@@ -5,13 +5,13 @@ import cors from "cors"
 
 
 //creates express app and http server
-const app = express()
+const app = express()//handles http requests
 const httpServer = createServer(app)
 
-
+//CORS (Cross-Origin Resource Sharing)
 //creates server with cors->allows next.js app to conncet from diff url
 const io = new Server(httpServer, {
-    cors: {
+    cors: { //controls which URLs can connect to this server
         origin: process.env.CLIENT_URL || "http://localhost:3000",
         methods: ["GET", "POST"],
     },

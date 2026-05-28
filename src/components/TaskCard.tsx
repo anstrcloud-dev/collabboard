@@ -8,7 +8,11 @@ type Task = {
   title: string
   description: string | null
   status: "BACKLOG" | "IN_PROGRESS" | "IN_REVIEW" | "DONE"
-
+  assigneeId: string | null
+  assignee: {
+    id: string
+    name: string
+  } | null
 }
 
 //add an onClick prop so the board page can handle the click
@@ -49,6 +53,17 @@ export function TaskCard({ task, onClick }: Props) {
         <p className="text-base font-medium text-white">{task.title}</p>
         {task.description && (
           <p className="text-xs text-white/60 mt-1 truncate">{task.description}</p>
+        )}
+
+        {/* Assignee initials circle */}
+        {task.assignee && (
+          <div className="flex justify-end mt-2">
+            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center">
+              <span className="text-white text-xs font-bold">
+                {task.assignee.name.charAt(0).toUpperCase()}
+              </span>
+            </div>
+          </div>
         )}
       </div>
     </div>
