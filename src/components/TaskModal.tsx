@@ -25,6 +25,7 @@ type Props = {
   task: Task
   editTitle: string
   editDescription: string
+ // currentUserId: string
 
   onTitleChange: (value: string) => void
   onDescriptionChange: (value: string) => void
@@ -41,6 +42,7 @@ export function TaskModal({
   task,
   editTitle,
   editDescription,
+  //currentUserId,
   onTitleChange,
   onDescriptionChange,
   onSave,
@@ -106,6 +108,7 @@ export function TaskModal({
               </option>
             ))}
           </select>
+         
         </div>
         {/* Buttons */}
         <div className="flex justify-between">

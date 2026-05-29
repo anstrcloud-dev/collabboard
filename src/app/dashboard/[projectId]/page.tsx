@@ -112,6 +112,9 @@ export default function BoardPage() {
     //get the current user's ID
     const { data: session } = useSession()
 
+    //pdf files
+    const [pdfLoading, setPdfLoading] = useState(false)
+
 
 
     // Keep localTasks in sync with server data
@@ -304,6 +307,7 @@ Add Members button to the header next to Back button
         await queryClient.invalidateQueries({ queryKey: ["members", projectId] })
     }
 
+    //ai task suggestions
     async function handleSuggest() {  //doesnt need projectId-already avail from useParams
         setSuggestLoading(true)
         const response = await fetch(`/api/projects/${projectId}/suggest`, {
@@ -318,6 +322,35 @@ Add Members button to the header next to Back button
         const data = await response.json()
         setSuggestions(data.suggestions)
         setSuggestLoading(false)
+    }
+
+
+    //pdf 
+    async function handlePdfUpload(file: File) {
+        setPdfLoading(true)
+
+        const formData = new FormData()
+        formData.append("pdf", file)
+
+        const response = await fetch(`/api/projects/${projectId}/upload-pdf`, {
+            method: "POST",
+            body: formData,
+        })
+
+        if (!response.ok) {
+            setPdfLoading(false)
+            return
+        }
+
+        const data = await response.json()
+        setSuggestions(data.suggestions.map((t: { title: string; description: string; priority: string }) => ({
+            title: t.title,
+            description: t.description,
+            category: "📄 from PDF",
+            priority: t.priority,
+            reason: "Extracted from uploaded PDF"
+        })))
+        setPdfLoading(false)
     }
 
 
@@ -340,6 +373,24 @@ Add Members button to the header next to Back button
                 >
                     Members
                 </button>
+                <>
+                    <input
+                        type="file"
+                        accept=".pdf"
+                        id="pdf-upload"
+                        className="hidden"
+                        onChange={(e) => {
+                            const file = e.target.files?.[0]
+                            if (file) handlePdfUpload(file)
+                        }}
+                    />
+                    <label
+                        htmlFor="pdf-upload"
+                        className={`backdrop-blur-md bg-white/10 border border-white/20 text-white px-4 py-2 rounded-lg hover:bg-white/20 transition-all cursor-pointer ${pdfLoading ? "opacity-50" : ""}`}
+                    >
+                        {pdfLoading ? "Processing..." : "📄 Upload PDF"}
+                    </label>
+                </>
             </div>
 
 
@@ -428,7 +479,9 @@ Add Members button to the header next to Back button
                                             id: "new-suggested",
                                             title: s.title,
                                             description: s.description,
-                                            status: "BACKLOG"
+                                            status: "BACKLOG",
+                                            assigneeId: null,
+                                            assignee: null,
                                         })
                                         setEditTitle(s.title)
                                         setEditDescription(s.description || "")
