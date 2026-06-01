@@ -17,6 +17,8 @@ import { MembersModal } from "@/components/MembersModal"
 import { useSession } from "next-auth/react"
 
 
+
+
 // The shape of a Task object
 type Task = {
     id: string
@@ -38,8 +40,10 @@ const COLUMNS = [
     { id: "DONE", label: "Done" },
 ];
 
-
-
+//for speech recognition
+type SpeechRecognitionEvent = {
+    results: { [key: number]: { [key: number]: { transcript: string } } }
+}
 
 
 export default function BoardPage() {
@@ -114,6 +118,11 @@ export default function BoardPage() {
 
     //pdf files
     const [pdfLoading, setPdfLoading] = useState(false)
+
+    //NL input
+    const [naturalInput, setNaturalInput] = useState("")  // the text input value
+    const [isListening, setIsListening] = useState(false)  // mic on/off
+    const [nlLoading, setNlLoading] = useState(false)      // while Groq is thinking
 
 
 
@@ -354,6 +363,76 @@ Add Members button to the header next to Back button
     }
 
 
+    //NL input
+    // NL input
+    async function fetchNaturalLanguageSuggestions(instruction: string) {
+        if (!instruction.trim()) return
+        setNlLoading(true)
+
+        const response = await fetch(`/api/projects/${projectId}/natural-language`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                instruction: instruction,  // use the parameter, not naturalInput state
+                existingTasks: localTasks.map(t => t.title)
+            })
+        })
+
+        const data = await response.json()
+        setSuggestions(data.suggestions)
+        setNaturalInput("")
+        setNlLoading(false)
+    }
+
+    async function handleNaturalLanguage() {
+        await fetchNaturalLanguageSuggestions(naturalInput)
+    }
+
+    // Voice input
+    function handleMic() {
+        const SpeechRecognition =
+            (window as Window & {
+                SpeechRecognition?: new () => {
+                    lang: string
+                    interimResults: boolean
+                    onstart: () => void
+                    onend: () => void
+                    onresult: (event: SpeechRecognitionEvent) => void
+                    start: () => void
+                }
+            }).SpeechRecognition ||
+            (window as Window & {
+                webkitSpeechRecognition?: new () => {
+                    lang: string
+                    interimResults: boolean
+                    onstart: () => void
+                    onend: () => void
+                    onresult: (event: SpeechRecognitionEvent) => void
+                    start: () => void
+                }
+            }).webkitSpeechRecognition
+
+        if (!SpeechRecognition) {
+            alert("Speech recognition not supported. Use Chrome or Edge.")
+            return
+        }
+
+        const recognition = new SpeechRecognition()
+        recognition.lang = "en-US"
+        recognition.interimResults = false
+        recognition.onstart = () => setIsListening(true)
+        recognition.onend = () => setIsListening(false)
+
+        recognition.onresult = (event: SpeechRecognitionEvent) => {
+            const transcript = event.results[0][0].transcript
+            setNaturalInput(transcript)
+            fetchNaturalLanguageSuggestions(transcript)
+        }
+
+        recognition.start()
+    }
+
+
     return (
         <div className="min-h-screen p-8">
             {/* Header */}
@@ -450,7 +529,32 @@ Add Members button to the header next to Back button
                 </div>
             </DndContext>
             {/* AI Suggest button */}
-            <div className="flex justify-center mt-6">
+            <div className="flex justify-center mt-6 gap-2">
+                <input
+                    type="text"
+                    value={naturalInput}
+                    onChange={(e) => setNaturalInput(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleNaturalLanguage()}
+                    placeholder="Describe what you need... e.g. 'add tasks for building a login system'"
+                    className="backdrop-blur-md bg-white/10 border border-white/20 rounded-full px-6 py-3 text-white placeholder-white/40 focus:outline-none w-96"
+                    style={{ color: 'white' }}
+                />
+                <button
+                    onClick={handleNaturalLanguage}
+                    disabled={nlLoading}
+                    className="backdrop-blur-md bg-white/10 border border-white/20 text-white px-6 py-3 rounded-full hover:bg-white/20 transition-all disabled:opacity-50"
+                >
+                    {nlLoading ? "Thinking..." : "→"}
+                </button>
+                <button
+                    onClick={handleMic}
+                    className={`backdrop-blur-md border text-white px-4 py-3 rounded-full transition-all ${isListening
+                        ? "bg-red-500/30 border-red-500/40 animate-pulse"
+                        : "bg-white/10 border-white/20 hover:bg-white/20"
+                        }`}
+                >
+                    🎤
+                </button>
                 <button
                     onClick={handleSuggest}
                     disabled={suggestLoading}
