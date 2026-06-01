@@ -25,6 +25,7 @@ type Task = {
     title: string
     description: string | null
     status: "BACKLOG" | "IN_PROGRESS" | "IN_REVIEW" | "DONE"
+    priority: "LOW" | "MEDIUM" | "HIGH" | "NONE"
     assigneeId: string | null
     assignee: {
         id: string
@@ -124,7 +125,8 @@ export default function BoardPage() {
     const [isListening, setIsListening] = useState(false)  // mic on/off
     const [nlLoading, setNlLoading] = useState(false)      // while Groq is thinking
 
-
+    //task prio
+    const [editPriority, setEditPriority] = useState<"LOW" | "MEDIUM" | "HIGH" | "NONE">("NONE")
 
     // Keep localTasks in sync with server data
     //runs after changes
@@ -221,6 +223,8 @@ export default function BoardPage() {
 
     //save task
     async function handleSave() {
+          console.log("Saving with priority:", editPriority)
+
         if (selectedTask!.id === "new-suggested") {
             // Create new task instead of updating
             await fetch(`/api/projects/${projectId}/tasks`, {
@@ -230,7 +234,8 @@ export default function BoardPage() {
                     title: editTitle,
                     description: editDescription,
                     status: "BACKLOG",
-                    assigneeId: editAssigneeId
+                    assigneeId: editAssigneeId,
+                    priority: editPriority
                 }),
             })
 
@@ -245,7 +250,8 @@ export default function BoardPage() {
                 body: JSON.stringify({
                     title: editTitle,
                     description: editDescription,
-                    assigneeId: editAssigneeId
+                    assigneeId: editAssigneeId,
+                    priority: editPriority
                 }),
             })
         }
@@ -487,6 +493,7 @@ Add Members button to the header next to Back button
                                         setEditTitle(task.title)
                                         setEditDescription(task.description || "")
                                         setEditAssigneeId(task.assigneeId || null)
+                                        setEditPriority(task.priority || "NONE")
                                     }} />
                             ))}
 
@@ -583,6 +590,7 @@ Add Members button to the header next to Back button
                                             id: "new-suggested",
                                             title: s.title,
                                             description: s.description,
+                                            priority: "NONE",
                                             status: "BACKLOG",
                                             assigneeId: null,
                                             assignee: null,
@@ -621,6 +629,8 @@ Add Members button to the header next to Back button
                     onSave={handleSave}
                     onDelete={handleDelete}
                     onClose={() => setSelectedTask(null)}
+                    editPriority={editPriority}
+                    onPriorityChange={setEditPriority}
                 />
             )}
             {membersOpen && (

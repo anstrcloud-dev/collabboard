@@ -8,6 +8,7 @@ type Task = {
   title: string
   description: string | null
   status: "BACKLOG" | "IN_PROGRESS" | "IN_REVIEW" | "DONE"
+  priority: "LOW" | "MEDIUM" | "HIGH" | "NONE"
   assigneeId: string | null
   assignee: {
     id: string
@@ -55,17 +56,34 @@ export function TaskCard({ task, onClick }: Props) {
           <p className="text-xs text-white/60 mt-1 truncate">{task.description}</p>
         )}
 
-        {/* Assignee initials circle */}
-        {task.assignee && (
-          <div className="flex justify-end mt-2">
+        {/* Bottom row — priority badge + assignee */}
+        <div className="flex justify-between items-center mt-2">
+          {/* Priority badge — only show if not NONE */}
+          {task.priority && task.priority !== "NONE" ? (
+            <span className={`text-xs px-2 py-0.5 rounded-full ${task.priority === "HIGH"
+                ? "bg-red-500/20 text-red-300"
+                : task.priority === "MEDIUM"
+                  ? "bg-yellow-500/20 text-yellow-300"
+                  : "bg-green-500/20 text-green-300"
+              }`}>
+              {task.priority === "HIGH" ? "🔴" : task.priority === "MEDIUM" ? "🟡" : "🟢"} {task.priority.toLowerCase()}
+            </span>
+          ) : (
+            <div />
+          )}
+
+          {/* Assignee initials — only show if assigned */}
+          {task.assignee && (
             <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center">
               <span className="text-white text-xs font-bold">
                 {task.assignee.name.charAt(0).toUpperCase()}
               </span>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
+
     </div>
+
   )
 }

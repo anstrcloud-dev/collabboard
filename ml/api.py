@@ -1,3 +1,8 @@
+# Loads the saved model from the .pkl file
+# Listens for HTTP requests on port 8000
+# When it receives a task title and description, predicts the priority
+# Returns { "priority": "high", "confidence": 0.76 }
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel

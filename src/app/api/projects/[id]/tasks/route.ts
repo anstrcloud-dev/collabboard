@@ -54,12 +54,18 @@ export async function POST(
   const { id } = await params;
 
   //parse
-  const { title, description, status } = await request.json()
+  const { title, status, description, assigneeId, priority } = await request.json()
 
   const task = await db.task.create({
-    //data: { title, description, projectId: id, status: status as TaskStatus }
-    data: { title, description, projectId: id, status: status as "BACKLOG" | "IN_PROGRESS" | "IN_REVIEW" | "DONE" }
-  });
+    data: {
+      title,
+      description,
+      status,
+      priority: priority || "NONE",
+      projectId: id,
+      assigneeId,
+    }
+  })
 
 
   return NextResponse.json(task,

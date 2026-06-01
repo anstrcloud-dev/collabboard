@@ -1,3 +1,11 @@
+# Loads 90 carefully labeled task examples we wrote
+# Converts text to numbers using TF-IDF
+# Trains a Random Forest model on those examples
+# Saves the trained model to ml/model/priority_model.pkl
+# Run this ONCE to train, then never again (unless you want to retrain)
+
+
+
 import pandas as pd
 import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer

@@ -31,12 +31,20 @@ export async function PATCH(
 
   const { taskId } = await params;
 
-  const { status, title, assigneeId, description } = await request.json();
+const { status, title, assigneeId, description, priority } = await request.json()
 
   const task = await db.task.update({
-    where: { id: taskId },
-    data: { status, title, assigneeId, description }
-  });
+  where: { id: taskId },
+  data: { 
+    status, 
+    title, 
+    description, 
+    priority,
+    assignee: assigneeId 
+      ? { connect: { id: assigneeId } } 
+      : { disconnect: true }
+  }
+})
 
   return NextResponse.json(task);
 

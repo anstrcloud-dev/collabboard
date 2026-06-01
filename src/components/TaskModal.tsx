@@ -8,6 +8,12 @@ type Task = {
   title: string
   description: string | null
   status: "BACKLOG" | "IN_PROGRESS" | "IN_REVIEW" | "DONE"
+  priority: "LOW" | "MEDIUM" | "HIGH" | "NONE"
+  assigneeId: string | null
+  assignee: {
+    id: string
+    name: string
+  } | null
 }
 
 //assigning members to a task
@@ -25,7 +31,9 @@ type Props = {
   task: Task
   editTitle: string
   editDescription: string
- // currentUserId: string
+  editPriority: "LOW" | "MEDIUM" | "HIGH" | "NONE"
+  onPriorityChange: (value: "LOW" | "MEDIUM" | "HIGH" | "NONE") => void
+  // currentUserId: string
 
   onTitleChange: (value: string) => void
   onDescriptionChange: (value: string) => void
@@ -51,6 +59,8 @@ export function TaskModal({
   members,
   assigneeId,
   onAssigneeChange,
+  editPriority,
+  onPriorityChange,
 }: Props) {
   return (
     // Backdrop — clicking outside the modal closes it
@@ -108,7 +118,21 @@ export function TaskModal({
               </option>
             ))}
           </select>
-         
+        </div>
+        {/* Priority */}
+        <div className="mb-6">
+          <p className="text-white/70 text-sm mb-2">Priority</p>
+          <select
+            value={editPriority}
+            onChange={(e) => onPriorityChange(e.target.value as "LOW" | "MEDIUM" | "HIGH" | "NONE")}
+            className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white focus:outline-none"
+            style={{ color: 'white' }}
+          >
+            <option value="NONE" className="bg-purple-900">No priority</option>
+            <option value="LOW" className="bg-purple-900">🟢 Low</option>
+            <option value="MEDIUM" className="bg-purple-900">🟡 Medium</option>
+            <option value="HIGH" className="bg-purple-900">🔴 High</option>
+          </select>
         </div>
         {/* Buttons */}
         <div className="flex justify-between">
