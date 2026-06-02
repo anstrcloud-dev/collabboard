@@ -128,6 +128,10 @@ export default function BoardPage() {
     //task prio
     const [editPriority, setEditPriority] = useState<"LOW" | "MEDIUM" | "HIGH" | "NONE">("NONE")
 
+    //disable add button
+    const [createLoading, setCreateLoading] = useState(false)
+
+
     // Keep localTasks in sync with server data
     //runs after changes
     useEffect(() => {
@@ -174,8 +178,10 @@ export default function BoardPage() {
 
     //create task
     async function handleCreateTask(status: string) {
+        if (!newTaskTitle.trim()) return
+        setCreateLoading(true)
 
-        const response = await fetch(`/api/projects/${projectId}/tasks`, {
+        await fetch(`/api/projects/${projectId}/tasks`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ title: newTaskTitle, status }),
@@ -185,7 +191,7 @@ export default function BoardPage() {
         await queryClient.invalidateQueries({ queryKey: ["tasks", projectId] })
         setNewTaskTitle("")
         setActiveColumn(null)
-
+        setCreateLoading(false)
     }
 
     //move tasks
@@ -223,7 +229,7 @@ export default function BoardPage() {
 
     //save task
     async function handleSave() {
-          console.log("Saving with priority:", editPriority)
+        console.log("Saving with priority:", editPriority)
 
         if (selectedTask!.id === "new-suggested") {
             // Create new task instead of updating
@@ -489,7 +495,7 @@ Add Members button to the header next to Back button
                                 <TaskCard key={task.id}
                                     task={task}
                                     onClick={(task) => {
-                                          console.log("Opening task priority:", task.priority)
+                                        console.log("Opening task priority:", task.priority)
 
                                         setSelectedTask(task)
                                         setEditTitle(task.title)
@@ -513,9 +519,10 @@ Add Members button to the header next to Back button
                                 <div className="flex gap-2">
                                     <button
                                         onClick={() => handleCreateTask(column.id)}
-                                        className="bg-white/20 border border-white/30 text-white px-3 py-1 rounded-lg text-sm hover:bg-white/30 transition-all"
+                                        disabled={createLoading}
+                                        className="bg-white/20 border border-white/30 text-white px-3 py-1 rounded-lg text-sm hover:bg-white/30 transition-all disabled:opacity-50"
                                     >
-                                        Add
+                                        {createLoading ? "Adding..." : "Add"}
                                     </button>
                                     <button
                                         onClick={() => setActiveColumn(null)}
@@ -599,8 +606,8 @@ Add Members button to the header next to Back button
                                         })
                                         setEditTitle(s.title)
                                         setEditDescription(s.description || "")
-                                       // setEditPriority("NONE")
-                                       setEditPriority((s.priority?.toUpperCase() || "NONE") as "LOW" | "MEDIUM" | "HIGH" | "NONE")
+                                        // setEditPriority("NONE")
+                                        setEditPriority((s.priority?.toUpperCase() || "NONE") as "LOW" | "MEDIUM" | "HIGH" | "NONE")
                                         //setSuggestions([])
                                         //setSuggestions(prev => prev.filter((_, i) => i !== index))
 
