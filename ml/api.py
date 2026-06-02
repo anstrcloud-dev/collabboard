@@ -20,8 +20,8 @@ app.add_middleware(
 )
 
 # Load model and vectorizer at startup
-model = joblib.load("ml/model/priority_model.pkl")
-vectorizer = joblib.load("ml/model/vectorizer.pkl")
+model = joblib.load("model/priority_model.pkl")
+vectorizer = joblib.load("model/vectorizer.pkl")
 
 class TaskInput(BaseModel):
     title: str
@@ -51,3 +51,10 @@ def predict_priority(task: TaskInput):
     confidence = float(max(proba))
     
     return PriorityOutput(priority=priority, confidence=round(confidence, 2))
+
+
+
+if __name__ == "__main__":
+    import uvicorn
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)
