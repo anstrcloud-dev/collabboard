@@ -47,6 +47,8 @@ model Task {
   description String?
   status      TaskStatus @default(BACKLOG)
   priority    Priority   @default(NONE)
+  order       Int        @default(0)
+  dueDate     DateTime?  // ← add this
   projectId   String
   assigneeId  String?
   createdAt   DateTime   @default(now())

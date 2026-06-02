@@ -31,7 +31,7 @@ export async function PATCH(
 
   const { id, taskId } = await params;
 
-  const { status, title, assigneeId, description, priority } = await request.json()
+  const { status, title, assigneeId, description, priority, dueDate } = await request.json()
 
   const task = await db.task.update({
     where: { id: taskId },
@@ -40,6 +40,7 @@ export async function PATCH(
       title,
       description,
       priority,
+      dueDate: dueDate ? new Date(dueDate) : null,
       assignee: assigneeId
         ? { connect: { id: assigneeId } }
         : { disconnect: true }
@@ -47,17 +48,17 @@ export async function PATCH(
   })
 
   // Save training feedback if priority is set
-  if (priority && priority !== "NONE") {
-    await db.trainingFeedback.create({
-      data: {
-        title,
-        description,
-        priority,
-        projectId: id,
-        userId: user.id,
-      }
-    })
-  }
+  if (priority && priority !== "NONE" && user.id) {
+  await db.trainingFeedback.create({
+    data: {
+      title: title as string,
+      description: description as string,
+      priority: priority as "LOW" | "MEDIUM" | "HIGH",
+      projectId: id,
+      userId: user.id,
+    }
+  })
+}
 
   return NextResponse.json(task);
 

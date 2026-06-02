@@ -10,6 +10,7 @@ type Task = {
   status: "BACKLOG" | "IN_PROGRESS" | "IN_REVIEW" | "DONE"
   priority: "LOW" | "MEDIUM" | "HIGH" | "NONE"
   assigneeId: string | null
+  dueDate: string | null
   assignee: {
     id: string
     name: string
@@ -45,6 +46,8 @@ type Props = {
   assigneeId: string | null
   onAssigneeChange: (userId: string | null) => void
   saveLoading: boolean
+  editDueDate: string
+  onDueDateChange: (value: string) => void
 }
 
 export function TaskModal({
@@ -62,7 +65,10 @@ export function TaskModal({
   onAssigneeChange,
   editPriority,
   onPriorityChange,
-  saveLoading
+  saveLoading,
+  editDueDate,
+  onDueDateChange
+
 }: Props) {
   return (
     // Backdrop — clicking outside the modal closes it
@@ -135,6 +141,17 @@ export function TaskModal({
             <option value="MEDIUM" className="bg-purple-900">🟡 Medium</option>
             <option value="HIGH" className="bg-purple-900">🔴 High</option>
           </select>
+        </div>
+        {/* Due Date */}
+        <div className="mb-6">
+          <p className="text-white/70 text-sm mb-2">Due date</p>
+          <input
+            type="date"
+            value={editDueDate}
+            onChange={(e) => onDueDateChange(e.target.value)}
+            className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white focus:outline-none"
+            style={{ color: 'white', colorScheme: 'dark' }}
+          />
         </div>
         {/* Buttons */}
         <div className="flex justify-between">

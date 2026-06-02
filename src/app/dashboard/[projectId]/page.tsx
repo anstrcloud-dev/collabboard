@@ -27,6 +27,7 @@ type Task = {
     status: "BACKLOG" | "IN_PROGRESS" | "IN_REVIEW" | "DONE"
     priority: "LOW" | "MEDIUM" | "HIGH" | "NONE"
     assigneeId: string | null
+    dueDate: string | null
     assignee: {
         id: string
         name: string
@@ -134,10 +135,13 @@ export default function BoardPage() {
     //disable save button
     const [saveLoading, setSaveLoading] = useState(false)
 
+    const [editDueDate, setEditDueDate] = useState<string>("")
 
     // Keep localTasks in sync with server data
     //runs after changes
+
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         if (serverTasks) setLocalTasks(serverTasks)
     }, [serverTasks]) //run whenever serverTasks changes
 
@@ -261,7 +265,8 @@ export default function BoardPage() {
                     title: editTitle,
                     description: editDescription,
                     assigneeId: editAssigneeId,
-                    priority: editPriority
+                    priority: editPriority,
+                    dueDate: editDueDate || null
                 }),
             })
         }
@@ -511,6 +516,8 @@ Add Members button to the header next to Back button
                                         setEditDescription(task.description || "")
                                         setEditAssigneeId(task.assigneeId || null)
                                         setEditPriority(task.priority || "NONE")
+                                        setEditDueDate(task.dueDate ? task.dueDate.split("T")[0] : "")
+
                                     }} />
                             ))}
 
@@ -610,6 +617,7 @@ Add Members button to the header next to Back button
                                             description: s.description,
                                             priority: "NONE",
                                             status: "BACKLOG",
+                                            dueDate: null,
                                             assigneeId: null,
                                             assignee: null,
                                         })
@@ -652,6 +660,8 @@ Add Members button to the header next to Back button
                     editPriority={editPriority}
                     onPriorityChange={setEditPriority}
                     saveLoading={saveLoading}
+                    editDueDate={editDueDate}
+                    onDueDateChange={setEditDueDate}
                 />
             )}
             {membersOpen && (
