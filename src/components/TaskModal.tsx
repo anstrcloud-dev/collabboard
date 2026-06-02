@@ -44,6 +44,7 @@ type Props = {
   members: { id: string; user: { id: string; name: string } }[]
   assigneeId: string | null
   onAssigneeChange: (userId: string | null) => void
+  saveLoading: boolean
 }
 
 export function TaskModal({
@@ -61,6 +62,7 @@ export function TaskModal({
   onAssigneeChange,
   editPriority,
   onPriorityChange,
+  saveLoading
 }: Props) {
   return (
     // Backdrop — clicking outside the modal closes it
@@ -155,9 +157,10 @@ export function TaskModal({
             </button>
             <button
               onClick={onSave}
-              className="backdrop-blur-md bg-white/20 border border-white/30 text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-all"
+              disabled={saveLoading}
+              className="backdrop-blur-md bg-white/20 border border-white/30 text-white px-4 py-2 rounded-lg hover:bg-white/30 disabled:opacity-50 transition-all"
             >
-              Save
+              {saveLoading ? "Saving..." : "Save"}
             </button>
           </div>
         </div>

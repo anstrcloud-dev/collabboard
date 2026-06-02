@@ -131,6 +131,9 @@ export default function BoardPage() {
     //disable add button
     const [createLoading, setCreateLoading] = useState(false)
 
+    //disable save button
+    const [saveLoading, setSaveLoading] = useState(false)
+
 
     // Keep localTasks in sync with server data
     //runs after changes
@@ -229,6 +232,7 @@ export default function BoardPage() {
 
     //save task
     async function handleSave() {
+        setSaveLoading(true)
         console.log("Saving with priority:", editPriority)
 
         if (selectedTask!.id === "new-suggested") {
@@ -264,6 +268,7 @@ export default function BoardPage() {
 
         await queryClient.invalidateQueries({ queryKey: ["tasks", projectId] })
         setSelectedTask(null)
+        setSaveLoading(false)
 
     }
 
@@ -491,6 +496,10 @@ Add Members button to the header next to Back button
                     <Column key={column.id} id={column.id} label={column.label}>
                         {localTasks
                             .filter((task: Task) => task.status === column.id)
+                            .sort((a, b) => {
+                                const order = { HIGH: 0, MEDIUM: 1, LOW: 2, NONE: 3 }
+                                return (order[a.priority] ?? 3) - (order[b.priority] ?? 3)
+                            })
                             .map((task: Task) => (
                                 <TaskCard key={task.id}
                                     task={task}
@@ -642,6 +651,7 @@ Add Members button to the header next to Back button
                     onClose={() => setSelectedTask(null)}
                     editPriority={editPriority}
                     onPriorityChange={setEditPriority}
+                    saveLoading={saveLoading}
                 />
             )}
             {membersOpen && (
