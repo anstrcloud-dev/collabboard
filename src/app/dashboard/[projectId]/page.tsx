@@ -489,6 +489,8 @@ Add Members button to the header next to Back button
                                 <TaskCard key={task.id}
                                     task={task}
                                     onClick={(task) => {
+                                          console.log("Opening task priority:", task.priority)
+
                                         setSelectedTask(task)
                                         setEditTitle(task.title)
                                         setEditDescription(task.description || "")
@@ -597,6 +599,8 @@ Add Members button to the header next to Back button
                                         })
                                         setEditTitle(s.title)
                                         setEditDescription(s.description || "")
+                                       // setEditPriority("NONE")
+                                       setEditPriority((s.priority?.toUpperCase() || "NONE") as "LOW" | "MEDIUM" | "HIGH" | "NONE")
                                         //setSuggestions([])
                                         //setSuggestions(prev => prev.filter((_, i) => i !== index))
 

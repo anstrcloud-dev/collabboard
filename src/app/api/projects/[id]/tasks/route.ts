@@ -56,15 +56,42 @@ export async function POST(
   //parse
   const { title, status, description, assigneeId, priority } = await request.json()
 
+  // Call FastAPI ML model to predict priority
+  // Only predict if priority not manually set
+  let taskPriority = priority || "NONE"
+
+  try {
+    // Get project details for context
+    const project = await db.project.findUnique({ where: { id } })
+
+    const mlResponse = await fetch("http://localhost:8000/predict", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title,
+        description: `${project?.name || ""} ${project?.description || ""} ${description || ""}`.trim()
+      })
+    })
+
+    if (mlResponse.ok) {
+      const { priority: predicted } = await mlResponse.json()
+      taskPriority = predicted.toUpperCase()
+    }
+  } catch {
+    console.log("ML service unavailable, using default priority")
+  }
+
+
   const task = await db.task.create({
     data: {
       title,
       description,
       status,
-      priority: priority || "NONE",
+      priority: taskPriority,
       projectId: id,
-      assigneeId,
-    }
+      assigneeId: assigneeId || null,
+    },
+    include: { assignee: true }
   })
 
 
