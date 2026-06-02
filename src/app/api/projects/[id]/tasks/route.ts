@@ -63,15 +63,20 @@ export async function POST(
   try {
     // Get project details for context
     const project = await db.project.findUnique({ where: { id } })
-
-    const mlResponse = await fetch("http://localhost:8000/predict", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        title,
-        description: `${project?.name || ""} ${project?.description || ""} ${description || ""}`.trim()
-      })
-    })
+    
+    const mlResponse = await fetch(
+      process.env.ML_SERVICE_URL
+        ? `${process.env.ML_SERVICE_URL}/predict`
+        : "http://localhost:8000/predict",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title,
+          description: `${project?.name || ""} ${project?.description || ""} ${description || ""}`.trim()
+        })
+      }
+    )
 
     if (mlResponse.ok) {
       const { priority: predicted } = await mlResponse.json()
