@@ -29,22 +29,35 @@ export async function PATCH(
   if (error) return error;
   //  //// await unwraps it — waits until the value is read
 
-  const { taskId } = await params;
+  const { id, taskId } = await params;
 
-const { status, title, assigneeId, description, priority } = await request.json()
+  const { status, title, assigneeId, description, priority } = await request.json()
 
   const task = await db.task.update({
-  where: { id: taskId },
-  data: { 
-    status, 
-    title, 
-    description, 
-    priority,
-    assignee: assigneeId 
-      ? { connect: { id: assigneeId } } 
-      : { disconnect: true }
+    where: { id: taskId },
+    data: {
+      status,
+      title,
+      description,
+      priority,
+      assignee: assigneeId
+        ? { connect: { id: assigneeId } }
+        : { disconnect: true }
+    }
+  })
+
+  // Save training feedback if priority is set
+  if (priority && priority !== "NONE") {
+    await db.trainingFeedback.create({
+      data: {
+        title,
+        description,
+        priority,
+        projectId: id,
+        userId: user.id,
+      }
+    })
   }
-})
 
   return NextResponse.json(task);
 

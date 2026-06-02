@@ -14,6 +14,8 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
 import joblib
 import os
+# Load user feedback from database
+import psycopg2
 
 data = [
     # HIGH priority — urgent, blocking, critical, deadline, must do now
@@ -118,8 +120,41 @@ df = pd.DataFrame(data, columns=["title", "description", "priority"])
 print(f"Dataset size: {len(df)} samples")
 print(df["priority"].value_counts())
 
+
+
+database_url = os.environ.get("DATABASE_URL")
+feedback_rows = []
+
+if database_url:
+    try:
+        conn = psycopg2.connect(database_url)
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT title, description, priority 
+            FROM "TrainingFeedback"
+            WHERE priority != 'NONE'
+        """)
+        rows = cursor.fetchall()
+        for title, description, priority in rows:
+            feedback_rows.append((
+                title or "",
+                description or "",
+                priority.lower()
+            ))
+        conn.close()
+        print(f"Loaded {len(feedback_rows)} feedback entries from database")
+    except Exception as e:
+        print(f"Could not load feedback: {e}")
+
+# Combine synthetic data with user feedback
+if feedback_rows:
+    df_feedback = pd.DataFrame(feedback_rows, columns=["title", "description", "priority"])
+    df = pd.concat([df, df_feedback], ignore_index=True)
+    print(f"Total training samples after feedback: {len(df)}")
+
 # Combine title and description as features
 df["text"] = df["title"] + " " + df["description"]
+
 
 # Feature extraction with TF-IDF
 print("\nExtracting features...")
