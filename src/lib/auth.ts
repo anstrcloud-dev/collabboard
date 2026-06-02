@@ -1,7 +1,8 @@
-import NextAuth from "next-auth";
-import Credentials from "next-auth/providers/credentials";
-import bcrypt from "bcryptjs";
-import { db } from "@/lib/db";
+import NextAuth from "next-auth"
+import Credentials from "next-auth/providers/credentials"
+import bcrypt from "bcryptjs"
+import { db } from "@/lib/db"
+import { checkRateLimit } from "@/lib/rateLimiter"
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   session: { strategy: "jwt" },
@@ -27,6 +28,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
+        // Rate limit by email to prevent brute force
+        const ip = (credentials?.email as string) || "unknown"
+        const allowed = await checkRateLimit(ip)
+        if (!allowed) {
+          throw new Error("Too many login attempts. Please try again later.")
+        }
         if (!credentials?.email || !credentials?.password) return null;
 
         const user = await db.user.findUnique({

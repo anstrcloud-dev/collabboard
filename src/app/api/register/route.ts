@@ -1,10 +1,24 @@
-import { NextResponse } from "next/server";
-import bcrypt from "bcryptjs";
-import { db } from "@/lib/db";
+import { NextResponse } from "next/server"
+import bcrypt from "bcryptjs"
+import { db } from "@/lib/db"
+import { checkRateLimit } from "@/lib/rateLimiter"
+import { headers } from "next/headers"
 
 // This function handles POST requests to /api/register
 // It creates a new user account in the database
 export async function POST(request: Request) {
+  // Get IP address
+  const headersList = await headers()
+  const ip = headersList.get("x-forwarded-for") || "unknown"
+
+  // Check rate limit
+  const allowed = await checkRateLimit(ip)
+  if (!allowed) {
+    return NextResponse.json(
+      { error: "Too many requests. Please try again later." },
+      { status: 429 }
+    )
+  }
   try {
     // Parse the JSON body from the request
     const { name, email, password } = await request.json();
