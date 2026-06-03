@@ -17,7 +17,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           cache: 'npm'
 
       - name: Install dependencies
@@ -26,7 +26,7 @@ jobs:
           DATABASE_URL: "postgresql://fake:fake@localhost:5432/fake"
 
       - name: TypeScript type check
-        run: npx tsc --noEmit
+        run: npx tsc --noEmit --project tsconfig.json
         env:
           DATABASE_URL: "postgresql://fake:fake@localhost:5432/fake"
 
