@@ -1,4 +1,4 @@
-"use client";
+"use client"
 
 import { useState, useEffect } from "react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
@@ -88,7 +88,7 @@ export default function DashboardPage() {
     //Call DELETE /api/projects/${projectId}
     //Call invalidateQueries to refresh the list
     async function handleDeleteProject(projectId: string) {
-        
+
         const confirmed = confirm("Are you sure you want to delete this project? This action cannot be undone.")
 
         if (!confirmed) return
@@ -122,6 +122,12 @@ export default function DashboardPage() {
                         >
                             Logout
                         </button>
+                        <Link
+                            href="/profile"
+                            className="backdrop-blur-md bg-white/10 border border-white/20 text-white px-4 py-2 rounded-lg hover:bg-white/20 transition-all"
+                        >
+                            Profile
+                        </Link>
                         <button
                             onClick={() => setFormOpen(true)}
                             className="backdrop-blur-md bg-white/20 border border-white/30 text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-all"
