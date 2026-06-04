@@ -22,7 +22,7 @@ An AI-powered full-stack project management app inspired by Linear and Jira. Bui
 - **AI task suggestions** — Groq LLM analyzes your project and suggests relevant tasks
 - **Natural language task creation** — describe what you need in plain English
 - **Voice input** — speak your task and AI creates it instantly
-- **PDF upload** — upload any document and AI extracts tasks automatically
+- **PDF upload with RAG** — upload any document, AI chunks it, generates embeddings via HuggingFace, retrieves relevant sections via pgvector cosine similarity, then extracts tasks via Groq LLM
 - **ML priority prediction** — Random Forest classifier auto-predicts task priority on creation
 - **Feedback loop** — user priority corrections stored and used to retrain the model
 
@@ -47,6 +47,8 @@ An AI-powered full-stack project management app inspired by Linear and Jira. Bui
 ### AI/ML
 - Groq API (llama-3.3-70b-versatile)
 - Python, scikit-learn, FastAPI
+- HuggingFace Inference API (sentence-transformers/all-MiniLM-L6-v2)
+- pgvector (PostgreSQL vector extension)
 - pdf-parse-fork, Web Speech API
 
 ### Infrastructure
