@@ -16,8 +16,9 @@ model User {
   createdAt DateTime @default(now())
 
   projects ProjectMember[]
-  tasks    Task[]          @relation("AssignedTasks")
+  tasks    Task[]                @relation("AssignedTasks")
   feedback TrainingFeedback[]
+  messages ConversationMessage[]
 }
 
 model Project {
@@ -26,10 +27,11 @@ model Project {
   description String?
   createdAt   DateTime @default(now())
 
-  members ProjectMember[]
-  tasks   Task[]
+  members  ProjectMember[]
+  tasks    Task[]
   feedback TrainingFeedback[]
   chunks   DocumentChunk[]
+  messages ConversationMessage[]
 }
 
 model ProjectMember {
@@ -49,7 +51,7 @@ model Task {
   status      TaskStatus @default(BACKLOG)
   priority    Priority   @default(NONE)
   order       Int        @default(0)
-  dueDate     DateTime?  // ← add this
+  dueDate     DateTime? // ← add this
   projectId   String
   assigneeId  String?
   createdAt   DateTime   @default(now())
@@ -72,16 +74,27 @@ model TrainingFeedback {
   user    User    @relation(fields: [userId], references: [id])
 }
 
-
 model DocumentChunk {
-  id        String   @id @default(cuid())
+  id        String                      @id @default(cuid())
   content   String
   embedding Unsupported("vector(384)")?
   projectId String
   fileName  String
+  createdAt DateTime                    @default(now())
+
+  project Project @relation(fields: [projectId], references: [id])
+}
+
+model ConversationMessage {
+  id        String   @id @default(cuid())
+  role      String // "user" or "assistant"
+  content   String
+  projectId String
+  userId    String
   createdAt DateTime @default(now())
 
   project Project @relation(fields: [projectId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
 }
 
 enum Role {
