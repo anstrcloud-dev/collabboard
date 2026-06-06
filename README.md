@@ -25,6 +25,7 @@ An AI-powered full-stack project management app inspired by Linear and Jira. Bui
 - **PDF upload with RAG** — upload any document, AI chunks it, generates embeddings via HuggingFace, retrieves relevant sections via pgvector cosine similarity, then extracts tasks via Groq LLM
 - **ML priority prediction** — Random Forest classifier auto-predicts task priority on creation
 - **Feedback loop** — user priority corrections stored and used to retrain the model
+- **AI Chat Assistant** — conversational AI with intent-based routing: asks like "what's overdue?", "who has the most work?", "summarize the sprint" fetch only relevant data from the database before calling Groq. Conversation history persists across sessions via PostgreSQL.
 
 ### Task Management
 - Task assignment with member initials shown on cards
@@ -50,6 +51,7 @@ An AI-powered full-stack project management app inspired by Linear and Jira. Bui
 - HuggingFace Inference API (sentence-transformers/all-MiniLM-L6-v2)
 - pgvector (PostgreSQL vector extension)
 - pdf-parse-fork, Web Speech API
+- Intent-based context retrieval (keyword router → targeted DB queries → Groq)
 
 ### Infrastructure
 - Vercel (Next.js app)
