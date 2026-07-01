@@ -21,6 +21,7 @@ type Task = {
     description: string | null
     status: "BACKLOG" | "IN_PROGRESS" | "IN_REVIEW" | "DONE"
     priority: "LOW" | "MEDIUM" | "HIGH" | "NONE"
+    order: number
     assigneeId: string | null
     dueDate: string | null
     assignee: { id: string; name: string } | null
@@ -175,6 +176,8 @@ export default function BoardPage() {
     }, [chatOpen, projectId])
 
     if (isLoading) return <p className="p-8">Loading...</p>
+
+
 
     // ─── Handlers ──────────────────────────────────────────────────────────
 
@@ -391,6 +394,19 @@ export default function BoardPage() {
     }
 
 
+    function getColumnTasks(columnId: string): Task[] {
+        const priorityRank = { HIGH: 0, MEDIUM: 1, LOW: 2, NONE: 3 }
+        return localTasks
+            .filter(t => t.status === columnId)
+            .sort((a, b) => {
+                // priority first
+                const p = priorityRank[a.priority] - priorityRank[b.priority]
+                if (p !== 0) return p
+                // same priority → manual drag order
+                return a.order - b.order
+            })
+    }
+
     // ─── Render ────────────────────────────────────────────────────────────
     return (
         <div className="min-h-screen p-8">
@@ -421,15 +437,9 @@ export default function BoardPage() {
                 <div className="flex gap-6 justify-center pb-4">
                     {COLUMNS.map((column) => (
                         <Column key={column.id} id={column.id} label={column.label}>
-                            {localTasks
-                                .filter((task: Task) => task.status === column.id)
-                                .sort((a, b) => {
-                                    const order = { HIGH: 0, MEDIUM: 1, LOW: 2, NONE: 3 }
-                                    return (order[a.priority] ?? 3) - (order[b.priority] ?? 3)
-                                })
-                                .map((task: Task) => (
-                                    <TaskCard key={task.id} task={task} onClick={openTaskModal} />
-                                ))}
+                            {getColumnTasks(column.id).map((task: Task) => (
+                                <TaskCard key={task.id} task={task} onClick={openTaskModal} />
+                            ))}
 
                             {activeColumn === column.id ? (
                                 <div className="mt-2">
@@ -501,7 +511,7 @@ export default function BoardPage() {
                                 </div>
                                 <button
                                     onClick={() => {
-                                        setSelectedTask({ id: "new-suggested", title: s.title, description: s.description, priority: "NONE", status: "BACKLOG", dueDate: null, assigneeId: null, assignee: null })
+                                        setSelectedTask({ id: "new-suggested", title: s.title, description: s.description, priority: "NONE", status: "BACKLOG", order: 0, dueDate: null, assigneeId: null, assignee: null })
                                         setEditTitle(s.title)
                                         setEditDescription(s.description || "")
                                         setEditPriority((s.priority?.toUpperCase() || "NONE") as "LOW" | "MEDIUM" | "HIGH" | "NONE")

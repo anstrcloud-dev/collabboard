@@ -9,6 +9,7 @@ type Task = {
   description: string | null
   status: "BACKLOG" | "IN_PROGRESS" | "IN_REVIEW" | "DONE"
   priority: "LOW" | "MEDIUM" | "HIGH" | "NONE"
+  order: number        
   assigneeId: string | null
   dueDate: string | null
   assignee: {
@@ -91,12 +92,11 @@ export function TaskCard({ task, onClick }: Props) {
         <div className="flex justify-between items-center mt-2">
           {/* Priority badge — only show if not NONE */}
           {task.priority && task.priority !== "NONE" ? (
-            <span className={`text-xs px-2 py-0.5 rounded-full ${
-              task.priority === "HIGH"
-              ? "bg-red-500/20 text-red-300"
-              : task.priority === "MEDIUM"
-                ? "bg-yellow-500/20 text-yellow-300"
-                : "bg-green-500/20 text-green-300"
+            <span className={`text-xs px-2 py-0.5 rounded-full ${task.priority === "HIGH"
+                ? "bg-red-500/20 text-red-300"
+                : task.priority === "MEDIUM"
+                  ? "bg-yellow-500/20 text-yellow-300"
+                  : "bg-green-500/20 text-green-300"
               }`}>
               {task.priority === "HIGH" ? "🔴" : task.priority === "MEDIUM" ? "🟡" : "🟢"} {task.priority.toLowerCase()}
             </span>
